@@ -40,5 +40,13 @@ main()
 * **No multiple account users log-in.**
 * **Can Request for additional module:**
     * **Need support donation :heart:**
+### Changes:
+* **Some bugs fix on "GET REPLY" function.**
+    * **While event-loop on going, it will not run "GET REPLY" function.**
+    * **Will reassign "GET REPLY" again for next loop.**
+* **Add "Ctrl-F1" for Help TeleTVG.pdf.** 
+### TIPS
+* **If user want to copy with "Ctrl-v" on Get Reply message screen, make sure on the Send Message screen is empty.**
+    * **"COPY" function only works on editable screen [Send Message screen].**
 
 ![TeleTVG](/pics/TeleTVG.png)

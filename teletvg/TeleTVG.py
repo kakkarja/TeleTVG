@@ -48,13 +48,14 @@ class Reminder:
         del gpath
         del gem
         self.root.protocol('WM_DELETE_WINDOW', self.winexit)
-        self.root.bind_all('<Control-p>', self.paste)
-        self.root.bind_all('<Control-c>', self.copc)
-        self.root.bind_all('<Control-x>', self.clear)
-        self.root.bind_all('<Control-o>', self.stopauto)
-        self.root.bind_all('<Control-m>', self.multiselect)
-        self.root.bind_all('<Control-s>', self.rectext)
-        self.root.bind_all('<Control-d>', self.delscreen)
+        self.root.bind('<Control-p>', self.paste)
+        self.root.bind('<Control-c>', self.copc)
+        self.root.bind('<Control-x>', self.clear)
+        self.root.bind('<Control-o>', self.stopauto)
+        self.root.bind('<Control-m>', self.multiselect)
+        self.root.bind('<Control-s>', self.rectext)
+        self.root.bind('<Control-d>', self.delscreen)
+        self.root.bind('<Control-F1>', self.help)
         self.seconds = None
         self.langs = None
         self.chacc = None
@@ -616,7 +617,7 @@ class Reminder:
                 self.text2.config(state = 'disable')
                 self.text2.yview_moveto(1)
                 await client.disconnect()
-            self.afterid = self.root.after(60000, self.getrep)        
+            self.afterid = self.root.after(60000, self.getrep)
         except Exception as e:
             await client.disconnect()
             messagebox.showerror('TeleTVG', f'{e}')
@@ -628,8 +629,11 @@ class Reminder:
             if self.afterid:
                 self.root.after_cancel(self.afterid)
             try:
-                asyncio.get_event_loop().run_until_complete(self.rep())
-                self.messages('<<<TeleTVG>>>\n\nGet Reply\n\nhas been updated!', 1200)
+                if not asyncio.get_event_loop().is_running():
+                    asyncio.get_event_loop().run_until_complete(self.rep())
+                    self.messages('<<<TeleTVG>>>\n\nGet Reply\n\nhas been updated!', 1200)
+                else:
+                    self.afterid = self.root.after(60000, self.getrep)
             except Exception as e:
                 messagebox.showwarning('TeleTVG', f'{e}')
         else:
@@ -1195,6 +1199,11 @@ class Reminder:
             os.startfile(path)
         else:
             messagebox.showinfo('TeleTVG', 'No downloded files yet!')
+
+    def help(self, event = None):
+        # Help function, that open tutorial pdf.
+        
+        os.startfile(os.path.join(__file__.rpartition('\\')[0], 'TeleTVG.pdf'))
 
 def bepath():
     # checking path.

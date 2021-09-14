@@ -17,6 +17,10 @@ import sys
 import json
 import re
 import io
+import ast
+from sys import platform
+from pathlib import Path
+
 
 class Reminder:
     """
@@ -29,6 +33,8 @@ class Reminder:
     def __init__(self, root):
         self.root = root
         self.root.title('TeleTVG')
+        self.orip = Path(os.getcwd())
+        self.plat = platform        
         self.wid = 705
         self.hei = 650
         self.root.minsize(705, 650)
@@ -36,16 +42,19 @@ class Reminder:
         self.pheight = int(self.root.winfo_screenheight()/3 - self.hei/3)
         self.root.geometry(f'{self.wid}x{self.hei}+{self.pwidth}+{self.pheight}')
         self.RESZ = f'{self.wid}x{self.hei}+{self.pwidth}+{self.pheight}'
-        gpath = os.getcwd().rpartition('\\')[0]
         gem = None
-        if 'telgeo.tvg' in os.listdir(gpath):
-            with open(os.path.join(gpath, 'telgeo.tvg'), 'rb') as geo:
-                gem = geo.read().decode('utf-8')
-            if '{' == gem[0] and '}' == gem[-1]:
-                gem = eval(gem)
-                self.root.geometry(gem['geo'])
-                self.RESZ = gem['geo']
-        del gpath
+        if os.path.exists(os.path.join(self.orip.parent, 'telgeo.tvg')):
+            with open(os.path.join(self.orip.parent, 'telgeo.tvg'), 'rb') as geo:
+                try:
+                    gem = ast.literal_eval(geo.read().decode('utf-8'))
+                except:
+                    messagebox.showerror(
+                        'TeleTVG', 
+                        'Unabale to set geometry because file setting is corrupted!'
+                    )
+                else:
+                    self.root.geometry(gem['geo'])
+                    self.RESZ = gem['geo']
         del gem
         self.root.protocol('WM_DELETE_WINDOW', self.winexit)
         self.root.bind('<Control-p>', self.paste)
@@ -55,7 +64,10 @@ class Reminder:
         self.root.bind('<Control-m>', self.multiselect)
         self.root.bind('<Control-s>', self.rectext)
         self.root.bind('<Control-d>', self.delscreen)
-        self.root.bind('<Control-F1>', self.help)
+        if self.plat. startswith('win'):
+            self.root.bind('<Control-F1>', self.help)
+        else:
+            self.root.bind('<Key-F1>', self.help)
         self.seconds = None
         self.langs = None
         self.chacc = None
@@ -67,9 +79,11 @@ class Reminder:
         self.result = None
         self.api_id = Reminder.API
         self.api_hash = Reminder.HASH_
+        del Reminder.API, Reminder.HASH_
         self.users = {}
-        self.stl = ttk.Style(self.root)
-        self.stl.theme_use('clam')        
+        if self.plat.startswith('win'):
+            self.stl = ttk.Style(self.root)
+            self.stl.theme_use('clam')
         self.frm1 = ttk.Frame(self.root)
         self.frm1.pack(fill = 'x')
         self.lab1 = ttk.Label(self.frm1, text = 'To:', justify = RIGHT)
@@ -79,32 +93,85 @@ class Reminder:
         self.entto.bind('<KeyRelease>', self.tynam)
         self.frm2 = ttk.Frame(self.root)
         self.frm2.pack(fill = 'x')
-        self.bem = Button(self.frm2, text = 'EMOJI', font = 'consolas 10 bold', 
-                          relief = GROOVE, command = self.emj, width = 4)
+        self.bem = Button(
+            self.frm2, 
+            text = 'EMOJI', 
+            font = 'consolas 10 bold', 
+            relief = GROOVE, 
+            command = self.emj, 
+            width = 4
+        )
         self.bem.pack(side = LEFT, padx = 2, pady = (0, 5), fill = 'x', expand = 1)        
-        self.bup = Button(self.frm2, text = 'PASTE', font = 'consolas 10 bold', 
-                          relief = GROOVE, command = self.paste, width = 4)
+        self.bup = Button(
+            self.frm2, 
+            text = 'PASTE', 
+            font = 'consolas 10 bold', 
+            relief = GROOVE, 
+            command = self.paste, 
+            width = 4
+        )
         self.bup.pack(side = LEFT, padx = 2, pady = (0, 5), fill = 'x', expand = 1)
-        self.buo = Button(self.frm2, text = 'COPIED', font = 'consolas 10 bold', 
-                          relief = GROOVE, command = self.copc, width = 4)
+        self.buo = Button(
+            self.frm2, 
+            text = 'COPIED', 
+            font = 'consolas 10 bold', 
+            relief = GROOVE, 
+            command = self.copc, 
+            width = 4
+        )
         self.buo.pack(side = LEFT, padx = 2, pady = (0, 5), fill = 'x', expand = 1)        
-        self.buc = Button(self.frm2, text = 'CLEAR', font = 'consolas 10 bold', 
-                          relief = GROOVE, command = self.clear, width = 4)
+        self.buc = Button(
+            self.frm2, 
+            text = 'CLEAR', 
+            font = 'consolas 10 bold', 
+            relief = GROOVE, 
+            command = self.clear, 
+            width = 4
+        )
         self.buc.pack(side = LEFT, padx = 2, pady = (0, 5), fill = 'x', expand = 1)      
-        self.bsel = Button(self.frm2, text = 'MULTI', font = 'consolas 10 bold', 
-                          relief = GROOVE, command = self.multiselect, width = 4)
+        self.bsel = Button(
+            self.frm2, 
+            text = 'MULTI', 
+            font = 'consolas 10 bold', 
+            relief = GROOVE, 
+            command = self.multiselect, 
+            width = 4
+        )
         self.bsel.pack(side = LEFT, padx = 2, pady = (0, 5), fill = 'x', expand = 1)
-        self.bedm = Button(self.frm2, text = 'ED MULTI', font = 'consolas 10 bold', 
-                          relief = GROOVE, command = self.editmu, width = 4)
+        self.bedm = Button(
+            self.frm2, 
+            text = 'ED MULTI', 
+            font = 'consolas 10 bold', 
+            relief = GROOVE, 
+            command = self.editmu, 
+            width = 4
+        )
         self.bedm.pack(side = LEFT, padx = 2, pady = (0, 5), fill = 'x', expand = 1)
-        self.bau = Button(self.frm2, text = 'AUTO SAVE', font = 'consolas 10 bold', 
-                          relief = GROOVE, command = self.rectext, width = 4)
+        self.bau = Button(
+            self.frm2, text = 'AUTO SAVE', 
+            font = 'consolas 10 bold', 
+            relief = GROOVE, 
+            command = self.rectext, 
+            width = 4
+        )
         self.bau.pack(side = LEFT, padx = 2, pady = (0, 5), fill = 'x', expand = 1)
-        self.boo = Button(self.frm2, text = 'ON\OFF', font = 'consolas 10 bold', 
-                          relief = GROOVE, command = self.stopauto, width = 4)
+        self.boo = Button(
+            self.frm2, 
+            text = 'ON\OFF', 
+            font = 'consolas 10 bold', 
+            relief = GROOVE, 
+            command = self.stopauto, 
+            width = 4
+        )
         self.boo.pack(side = LEFT, padx = 2, pady = (0, 5), fill = 'x', expand = 1)        
-        self.bds = Button(self.frm2, text = 'DEL REPLY', font = 'consolas 10 bold', 
-                          relief = GROOVE, command = self.delscreen, width = 4)
+        self.bds = Button(
+            self.frm2, 
+            text = 'DEL REPLY', 
+            font = 'consolas 10 bold', 
+            relief = GROOVE, 
+            command = self.delscreen, 
+            width = 4
+        )
         self.bds.pack(side = LEFT, padx = 2, pady = (0, 5), fill = 'x', expand = 1)
         self.frll = ttk.Frame(self.root)
         self.frll.pack(fill = 'x', padx = 2)
@@ -113,40 +180,88 @@ class Reminder:
         self.spl1 = ttk.Label(self.frsp, text = 'Days')
         self.spl1.pack(side = LEFT, pady = (0, 5), padx = (2, 0))
         self.sp1v = IntVar(self.root)
-        self.sp1 = ttk.Spinbox(self.frsp, from_ = 0, to = 365, textvariable = self.sp1v, justify = 'center', width = 4)
+        self.sp1 = ttk.Spinbox(
+            self.frsp, 
+            from_ = 0, 
+            to = 365, 
+            textvariable = self.sp1v, 
+            justify = 'center', 
+            width = 4
+        )
         self.sp1.config(state = 'readonly')
         self.sp1.pack(side = LEFT, pady = (0, 5), padx = (0, 5), fill = 'x', expand = 1)
         self.spl2 = ttk.Label(self.frsp, text = 'Hours')
         self.spl2.pack(side = LEFT, pady = (0, 5), padx = (0, 5))
         self.sp2v = IntVar(self.root)
-        self.sp2 = ttk.Spinbox(self.frsp, from_ = 0, to = 24, textvariable = self.sp2v, justify = 'center', width = 4)
+        self.sp2 = ttk.Spinbox(
+            self.frsp, 
+            from_ = 0, 
+            to = 24, 
+            textvariable = self.sp2v, 
+            justify = 'center', 
+            width = 4
+        )
         self.sp2.config(state = 'readonly')
         self.sp2.pack(side = LEFT, pady = (0, 5), padx = (0, 5), fill = 'x', expand = 1)
         self.spl3 = ttk.Label(self.frsp, text = 'Minutes')
         self.spl3.pack(side = LEFT, pady = (0, 5), padx = (0, 5))
         self.sp3v = IntVar(self.root)
-        self.sp3 = ttk.Spinbox(self.frsp, from_ = 0, to = 60, textvariable = self.sp3v, justify = 'center', width = 4)
+        self.sp3 = ttk.Spinbox(
+            self.frsp, 
+            from_ = 0, 
+            to = 60, 
+            textvariable = self.sp3v, 
+            justify = 'center', 
+            width = 4
+        )
         self.sp3.config(state = 'readonly')
         self.sp3.pack(side = LEFT, pady = (0, 5), padx = (0, 5), fill = 'x', expand = 1)
         self.spl4 = ttk.Label(self.frsp, text = 'Seconds')
         self.spl4.pack(side = LEFT, pady = (0, 5), padx = (0, 5))
         self.sp4v = IntVar(self.root)
-        self.sp4 = ttk.Spinbox(self.frsp, from_ = 5, to = 60, textvariable = self.sp4v, justify = 'center', width = 4)
+        self.sp4 = ttk.Spinbox(
+            self.frsp, 
+            from_ = 5, 
+            to = 60, 
+            textvariable = self.sp4v, 
+            justify = 'center', 
+            width = 4
+        )
         self.sp4v.set(5)
         self.sp4.config(state = 'readonly')
         self.sp4.pack(side = LEFT, pady = (0, 5), padx = (0, 3), fill = 'x', expand = 1)
         self.frms = ttk.Frame(self.root)
         self.frms.pack(fill = 'x')
-        self.schb = Button(self.frms, text = 'S C H E D U L E R  S E N D', 
-                           command = self.runsend, font = 'consolas 12 bold', relief = GROOVE)
+        self.schb = Button(
+            self.frms, 
+            text = 'S C H E D U L E R  S E N D', 
+            command = self.runsend, 
+            font = 'consolas 12 bold', 
+            relief = GROOVE
+        )
         self.schb.pack(side = LEFT, padx = 2, pady = (0, 5), fill = 'x', expand = 1)
-        self.schm = Button(self.frms, text = 'S C H E D U L E R  M U L T I', 
-                           command = self.multisched, font = 'consolas 12 bold', relief = GROOVE)
+        self.schm = Button(
+            self.frms, 
+            text = 'S C H E D U L E R  M U L T I', 
+            command = self.multisched, 
+            font = 'consolas 12 bold', 
+            relief = GROOVE
+        )
         self.schm.pack(side = LEFT, padx = 2, pady = (0, 5), fill = 'x', expand = 1)        
         self.frm3 = ttk.Frame(self.root)
         self.frm3.pack(fill = 'both')
-        self.text = Text(self.frm3, font = '-*-Segoe-UI-Emoji-*--*-153-*', pady = 3, padx = 5, 
-                         relief = FLAT, wrap = 'word', height = 12)
+        self.text = Text(
+            self.frm3,
+            pady = 3, 
+            padx = 5, 
+            relief = FLAT, 
+            wrap = 'word', 
+            height = 12
+        )
+        if self.plat.startswith('win'):
+            self.text.config(font = '-*-Segoe-UI-Emoji-*--*-153-*')
+        else:
+            self.text.config(font = 'consolas 12 bold')        
         self.text.pack(side = LEFT, padx = (2,0), pady = (0, 5), fill = 'both', expand = 1)
         self.text.bind('<KeyRelease-space>', self.autotext)
         self.scroll = Scrollbar(self.frm3)
@@ -155,22 +270,56 @@ class Reminder:
         self.text.config(yscrollcommand = self.scroll.set)
         self.frbs = ttk.Frame(self.root)
         self.frbs.pack(fill = 'x')
-        self.sbut = Button(self.frbs, text = 'S E N D  N O W', command = self.sentem, 
-                           font = 'consolas 12 bold', relief = GROOVE, width = 4)
+        self.sbut = Button(
+            self.frbs, 
+            text = 'S E N D  N O W', 
+            command = self.sentem, 
+            font = 'consolas 12 bold', 
+            relief = GROOVE, 
+            width = 4
+        )
         self.sbut.pack(side =  LEFT, padx = 2, pady = (0, 5), fill = 'x', expand = 1)
-        self.busf = Button(self.frbs, text = 'S E N D  F I L E', command = self.sf, 
-                           font = 'consolas 12 bold', relief = GROOVE, width = 4)
+        self.busf = Button(
+            self.frbs, 
+            text = 'S E N D  F I L E', 
+            command = self.sf, 
+            font = 'consolas 12 bold', 
+            relief = GROOVE, 
+            width = 4
+        )
         self.busf.pack(side =  LEFT, padx = (0, 2), pady = (0, 5), fill = 'x', expand = 1)
-        self.busf = Button(self.frbs, text = 'S E N D  M U L T I', command = self.multisend, 
-                           font = 'consolas 12 bold', relief = GROOVE, width = 4)
+        self.busf = Button(
+            self.frbs, 
+            text = 'S E N D  M U L T I', 
+            command = self.multisend, 
+            font = 'consolas 12 bold', 
+            relief = GROOVE, 
+            width = 4
+        )
         self.busf.pack(side =  LEFT, padx = (0, 2), pady = (0, 5), fill = 'x', expand = 1)
-        self.bufm = Button(self.frbs, text = 'F I L E  M U L T I', command = self.mulfile, 
-                           font = 'consolas 12 bold', relief = GROOVE, width = 4)
+        self.bufm = Button(
+            self.frbs, 
+            text = 'F I L E  M U L T I', 
+            command = self.mulfile, 
+            font = 'consolas 12 bold', 
+            relief = GROOVE, 
+            width = 4
+        )
         self.bufm.pack(side =  RIGHT, padx = (0, 2), pady = (0, 5), fill = 'x', expand = 1)          
         self.frm4 = ttk.Frame(self.root)
         self.frm4.pack(fill = 'both', expand = 1)
-        self.text2 = Text(self.frm4, font = '-*-Segoe-UI-Emoji-*--*-153-*', pady = 3, padx = 5, 
-                         relief = FLAT, wrap = 'word', height = 12)
+        self.text2 = Text(
+            self.frm4, 
+            pady = 3, 
+            padx = 5, 
+            relief = FLAT, 
+            wrap = 'word', 
+            height = 12
+        )
+        if self.plat.startswith('win'):
+            self.text2.config(font = '-*-Segoe-UI-Emoji-*--*-153-*')
+        else:
+            self.text2.config(font = 'consolas 12 bold')
         self.text2.pack(side = LEFT, padx = (2,0), pady = (0, 5), fill = 'both', expand = 1)
         self.scroll2 = Scrollbar(self.frm4)
         self.scroll2.pack(side = RIGHT, fill = 'y', padx = (0,2), pady = (0, 5))
@@ -179,40 +328,73 @@ class Reminder:
         self.text2.config(state = 'disable')
         self.frgr = ttk.Frame(self.root)
         self.frgr.pack(fill = 'both')
-        self.bugr = Button(self.frgr, text = 'G E T  R E P L Y', command = self.getrep, 
-                           font = 'consolas 12 bold', relief = GROOVE, width = 4)
+        self.bugr = Button(
+            self.frgr, 
+            text = 'G E T  R E P L Y', 
+            command = self.getrep, 
+            font = 'consolas 12 bold', 
+            relief = GROOVE, 
+            width = 4
+        )
         self.bugr.pack(side = LEFT, padx = 2, pady = (0, 5), fill = 'both', expand = 1)
-        self.bugf = Button(self.frgr, text = 'G E T  F I L E', command = self.gf, 
-                           font = 'consolas 12 bold', relief = GROOVE, width = 4)
+        self.bugf = Button(
+            self.frgr, 
+            text = 'G E T  F I L E', 
+            command = self.gf, 
+            font = 'consolas 12 bold', 
+            relief = GROOVE, 
+            width = 4
+        )
         self.bugf.pack(side = LEFT, padx = (0, 2), pady = (0, 5), fill = 'both', expand = 1)
-        self.buof = Button(self.frgr, text = 'F O L D E R S', command = self.opfold, 
-                           font = 'consolas 12 bold', relief = GROOVE, width = 4)
+        self.buof = Button(
+            self.frgr, 
+            text = 'F O L D E R S', 
+            command = self.opfold, 
+            font = 'consolas 12 bold', 
+            relief = GROOVE, 
+            width = 4
+        )
         self.buof.pack(side = LEFT, padx = (0, 2), pady = (0, 5), fill = 'both', expand = 1)        
-        self.bulg = Button(self.frgr, text = 'L O G  O U T', command = self.lg, 
-                           font = 'consolas 12 bold', relief = GROOVE, width = 4)
+        self.bulg = Button(
+            self.frgr, 
+            text = 'L O G  O U T', 
+            command = self.lg, 
+            font = 'consolas 12 bold', 
+            relief = GROOVE, 
+            width = 4
+        )
         self.bulg.pack(side = RIGHT, padx = (0, 2), pady = (0, 5), fill = 'both', expand = 1)        
         self.entto.focus()
         self.auto = {}
-        if 'auto.tvg' in os.listdir(os.getcwd().rpartition('\\')[0]):
-            with open(os.path.join(os.getcwd().rpartition('\\')[0], 'auto.tvg')) as aur:
-                rd = aur.read()
-            if '{' in rd[0] and '}' in rd[-1]:
-                rd = eval(rd)
-                self.auto = rd
-            else:
-                os.remove(os.path.join(os.getcwd().rpartition('\\')[0], 'auto.tvg'))
-                messagebox.showwarning('TeleTVG', 'The file has been corrupted and removed!!!', parent = self.root)
+        if os.path.exists(os.path.join(self.orip.parent, 'auto.tvg')):
+            with open(os.path.join(self.orip.parent, 'auto.tvg')) as aur:
+                try:
+                    rd = ast.literal_eval(aur.read())
+                    self.auto = rd
+                except:
+                    os.remove(os.path.join(self.orip.parent, 'auto.tvg'))
+                    messagebox.showwarning(
+                        'TeleTVG', 
+                        'The file has been corrupted and removed!!!', 
+                        parent = self.root
+                    )
                 
     def stopauto(self, event = None):
         # Disable autotext
         
         if self.STOP_A:
             self.STOP_A = False
-            self.messages('<<Auto-Text>>\n\nis enabled!', 700)
+            if self.plat.startswith('win'):
+                self.messages('<<Auto-Text>>\n\nis enabled!', 700)
+            else:
+                messagebox.showinfo('TeleTVG', 'Auto-Text is enabled!')
         else:
             self.STOP_A = True
-            self.messages('<<Auto-Text>>\n\nis disabled!', 700)
-            
+            if self.plat.startswith('win'):
+                self.messages('<<Auto-Text>>\n\nis disabled!', 700)
+            else:
+                messagebox.showinfo('TeleTVG', 'Auto-Text is disabled!')
+                
     def messages(self, m: str, t_out: int):
         # Message for informing.
         
@@ -231,7 +413,17 @@ class Reminder:
         frm = Frame(a, borderwidth = 7, bg = 'dark blue', width = 250, height = 250)
         frm.pack(fill = 'both', expand = 1)
         tx = m
-        lab = Label(frm, text = tx, justify = 'center', anchor = 'center', font = 'verdana 15 bold', width = 250, height = 250, bg = 'gold', fg = 'black')
+        lab = Label(
+            frm, 
+            text = tx, 
+            justify = 'center', 
+            anchor = 'center', 
+            font = 'verdana 15 bold', 
+            width = 250, 
+            height = 250, 
+            bg = 'gold', 
+            fg = 'black'
+        )
         lab.pack(fill = 'both', expand = 1)
     
     def rectext(self, event = None):
@@ -240,42 +432,69 @@ class Reminder:
         # text [space] expanded
         
         if self.text.get('0.1', END)[:-1]:
-            ask = messagebox.askyesno('TeleTVG', '"Yes" save autotext or "No" to delete', parent = self.root)
+            ask = messagebox.askyesno(
+                'TeleTVG', 
+                '"Yes" save autotext or "No" to delete', 
+                parent = self.root
+            )
             if ask:
                 ck = [i for i in self.text.get('0.1', END).split('\n') if i]
-                collect = [tuple([k.partition('::')[0].strip(), k.partition('::')[2].strip().replace('~', '\n')]) for k in ck if '::' in k]
+                collect = [
+                    tuple(
+                        [
+                            k.partition('::')[0].strip(), 
+                            k.partition('::')[2].strip().replace('~', '\n')
+                        ]
+                    ) 
+                    for k in ck if '::' in k
+                ]
                 if len(ck) == len(collect):
                     del ck
                     self.auto = {}
-                    if 'auto.tvg' not in os.listdir(os.getcwd().rpartition('\\')[0]):
-                        with open(os.path.join(os.getcwd().rpartition('\\')[0], 'auto.tvg'), 'w') as aur:
+                    if not os.path.exists(os.path.join(self.orip.parent, 'auto.tvg')):
+                        with open(os.path.join(self.orip.parent, 'auto.tvg'), 'w') as aur:
                             aur.write(str(dict(collect)))
                         self.auto = dict(collect)
                     else:
-                        with open(os.path.join(os.getcwd().rpartition('\\')[0], 'auto.tvg')) as aur:
-                            rd = aur.read()
-                        if '{' in rd[0] and '}' in rd[-1]:
-                            rd = eval(rd)
-                            with open(os.path.join(os.getcwd().rpartition('\\')[0], 'auto.tvg'), 'w') as aur:
-                                aur.write(str(rd | dict(collect)))
-                            self.auto = rd | dict(collect)
-                        else:
-                            with open(os.path.join(os.getcwd().rpartition('\\')[0], 'auto.tvg'), 'w') as aur:
+                        try:
+                            with open(os.path.join(self.orip.parent, 'auto.tvg')) as aur:
+                                rd = ast.literal_eval(aur.read())
+                        except:
+                            with open(os.path.join(self.orip.parent, 'auto.tvg'), 'w') as aur:
                                 aur.write(str(dict(collect)))
                             self.auto = dict(collect)                            
-                            messagebox.showwarning('TeleTVG', 'The file has been corrupted and recreated new!!!', parent = self.root)
-                    del collect
-                    self.text.delete('1.0', END)
+                            messagebox.showwarning(
+                                'TeleTVG', 
+                                'The file has been corrupted and recreated new!!!', 
+                                parent = self.root
+                            )
+                        else:
+                            with open(os.path.join(self.orip.parent, 'auto.tvg'), 'w') as aur:
+                                aur.write(str(rd | dict(collect)))
+                            self.auto = rd | dict(collect)
+                        finally:
+                            del collect
+                            self.text.delete('1.0', END)
                 else:
                     del ck
                     del collect
-                    messagebox.showinfo('TeleTVG', 'No autotext recorded (please check the format)!', parent = self.root)
+                    messagebox.showinfo(
+                        'TeleTVG', 
+                        'No autotext recorded (please check the format)!', 
+                        parent = self.root
+                    )
             else:
-                if 'auto.tvg' in os.listdir(os.getcwd().rpartition('\\')[0]):
-                    with open(os.path.join(os.getcwd().rpartition('\\')[0], 'auto.tvg')) as aur:
-                        rd = aur.read()
-                    if '{' in rd[0] and '}' in rd[-1]:                        
-                        rd = eval(rd)
+                if os.path.exists(os.path.join(self.orip.parent, 'auto.tvg')):
+                    try:
+                        with open(os.path.join(self.orip.parent, 'auto.tvg')) as aur:
+                            rd = ast.literal_eval(aur.read())
+                    except:
+                        messagebox.showerror(
+                            'TeleTVG', 
+                            'File has been corrupted!!!', 
+                            parent = self.root
+                        )
+                    else:
                         def sure(event):
                             try:
                                 if event.char in string.ascii_letters:
@@ -286,7 +505,12 @@ class Reminder:
                                         event.widget.insert(0, gt[:idx])
                                         if event.widget.get():
                                             for name in rd:
-                                                if event.widget.get().title() in name.title() and name.title().startswith(event.widget.get().title()[0]):
+                                                if (
+                                                    event.widget.get().title() in name.title() 
+                                                    and name.title().startswith(
+                                                        event.widget.get().title()[0]
+                                                        )
+                                                    ):
                                                     event.widget.delete(0, END)
                                                     event.widget.insert(END, f'{name}: {rd[name]}')
                                                     MyDialog.am.see(list(rd).index(name))
@@ -325,14 +549,16 @@ class Reminder:
                             for i in d.result:
                                 del rd[i]
                             if rd:
-                                with open(os.path.join(os.getcwd().rpartition('\\')[0], 'auto.tvg'), 'w') as aur:
+                                with open(os.path.join(self.orip.parent, 'auto.tvg'), 'w') as aur:
                                     aur.write(str(rd))
                             else:
-                                os.remove(os.path.join(os.getcwd().rpartition('\\')[0], 'auto.tvg'))
+                                os.remove(os.path.join(self.orip.parent, 'auto.tvg'))
                         else:
-                            messagebox.showinfo('TeleTVG', 'Deleteion of autotext aborted!', parent = self.root)
-                    else:
-                        messagebox.showerror('TeleTVG', 'File has been corrupted!!!', parent = self.root)
+                            messagebox.showinfo(
+                                'TeleTVG', 
+                                'Deleteion of autotext aborted!', 
+                                parent = self.root
+                            )
         else:
             messagebox.showinfo('TeleTVG', 'No autotext to record!', parent = self.root)
             
@@ -345,16 +571,28 @@ class Reminder:
                 if self.text.get('0.1', END)[:-1]:
                     if self.auto:
                         vpox = self.text.get(f'{INSERT} linestart', f'{INSERT}-1c').split(' ')[-1]
-                        if list(self.auto).count(vpox := vpox.lower() if list(self.auto).count(vpox.lower()) else vpox):
-                            if len(self.text.get(f'{INSERT} linestart', f'{INSERT}-1c').split(' ')) == 1 or self.text.get(f'{INSERT} linestart', f'{INSERT}-1c').split(' ')[-2][-1] == '.':
+                        if list(self.auto).count(
+                            vpox := vpox.lower() 
+                            if list(self.auto).count(vpox.lower()) 
+                            else 
+                            vpox
+                            ):
+                            if len(
+                                self.text.get(f'{INSERT} linestart', f'{INSERT}-1c').split(' ')
+                                ) == 1 or self.text.get(
+                                    f'{INSERT} linestart', f'{INSERT}-1c'
+                                    ).split(' ')[-2][-1] == '.':
                                 self.text.delete(f'{INSERT}-{len(vpox)+1}c', f'{INSERT}')
                                 if self.auto[vpox][0] in string.ascii_lowercase:
-                                    self.text.insert(f'{INSERT}', self.auto[vpox][0].upper()+self.auto[vpox][1:]+' ')
+                                    self.text.insert(
+                                        f'{INSERT}', 
+                                        self.auto[vpox][0].upper()+self.auto[vpox][1:]+' '
+                                    )
                                 else:
                                     self.text.insert(f'{INSERT}', self.auto[vpox]+' ')
                             else:
                                 self.text.delete(f'{INSERT}-{len(vpox)+1}c', f'{INSERT}')
-                                self.text.insert(f'{INSERT}', self.auto[vpox]+' ')                                
+                                self.text.insert(f'{INSERT}', self.auto[vpox]+' ')
                         del vpox
                             
     def tynam(self, event = None):
@@ -371,7 +609,11 @@ class Reminder:
                         r = 2
                         while r:
                             for name in self.users:
-                                if self.entto.get().lower() in name.lower() and self.entto.get().lower() == name.lower()[:len(self.entto.get().lower())]:
+                                if (self.entto.get().lower() in name.lower() 
+                                    and self.entto.get().lower() == name.lower()[
+                                        :len(self.entto.get().lower())
+                                        ]
+                                    ):
                                     self.entto.current(sorted(list(self.users)).index(name))
                             r -= 1
                     self.entto.icursor(index = idx)
@@ -381,25 +623,30 @@ class Reminder:
     def emj(self):
         # Emoji window.
         
-        emo.main(self)
+        if self.plat.startswith('win'):
+            emo.main(self)
+        else:
+            messagebox.showinfo('TeleTVG', 'In MacOS Emoji not working in tkinter!')
         
     def winexit(self):
         # Will close ReminderTel and Emoji window as well.
         
         if str(self.root.state()) != 'withdrawn':
-            ori = os.getcwd().rpartition('\\')[0]
             if str(self.root.winfo_geometry()) == self.RESZ:
-                with open(os.path.join(ori, 'telgeo.tvg'), 'wb') as geo:
+                with open(os.path.join(self.orip.parent, 'telgeo.tvg'), 'wb') as geo:
                     geo.write(str({'geo': self.RESZ}).encode())
             else:
-                ask = messagebox.askyesno('TeleTVG', "Do you want to set your new window's position?")
+                ask = messagebox.askyesno(
+                    'TeleTVG', 
+                    "Do you want to set your new window's position?",
+                    parent = self.root
+                )
                 if ask:
-                    with open(os.path.join(ori, 'telgeo.tvg'), 'wb') as geo:
+                    with open(os.path.join(self.orip.parent, 'telgeo.tvg'), 'wb') as geo:
                         geo.write(str({'geo': str(self.root.winfo_geometry())}).encode())
                 else:
-                    with open(os.path.join(ori, 'telgeo.tvg'), 'wb') as geo:
+                    with open(os.path.join(self.orip.parent, 'telgeo.tvg'), 'wb') as geo:
                         geo.write(str({'geo': self.RESZ}).encode())
-            del ori
         if self.afterid:
             self.root.after_cancel(self.afterid)
         if emo.Emo.status is False:
@@ -412,7 +659,11 @@ class Reminder:
         try:
             p = self.root.clipboard_get()
             if p:
-                ask = messagebox.askyesno('TeleTVG', 'Do you want to paste text?', parent = self.root)
+                ask = messagebox.askyesno(
+                    'TeleTVG', 
+                    'Do you want to paste text?', 
+                    parent = self.root
+                )
                 if ask:
                     self.text.delete('1.0', END)
                     self.text.insert(END, p)
@@ -429,17 +680,29 @@ class Reminder:
                 self.root.clipboard_append(self.text.selection_get())
                 self.text.tag_remove('sel', 'sel.first', 'sel.last')
                 self.text.mark_set('insert', INSERT)
-                messagebox.showinfo('TeleTVG', 'Selected text has been copied!', parent = self.root)
+                messagebox.showinfo(
+                    'TeleTVG', 
+                    'Selected text has been copied!', 
+                    parent = self.root
+                )
             else:
                 self.root.clipboard_clear()
                 self.root.clipboard_append(self.text.get('1.0', END)[:-1])
-                messagebox.showinfo('TeleTVG', 'The text has been copied!', parent = self.root)
+                messagebox.showinfo(
+                    'TeleTVG', 
+                    'The text has been copied!', 
+                    parent = self.root
+                )
     
     def clear(self, event = None):
         # Clear screen.
         
         if self.text.get('1.0', END)[:-1]:
-            ask = messagebox.askyesno('TeleTVG', 'Do you want to clear the text?', parent = self.root)
+            ask = messagebox.askyesno(
+                'TeleTVG', 
+                'Do you want to clear the text?', 
+                parent = self.root
+            )
             if ask:
                 self.text.delete('1.0', END)
                 
@@ -452,17 +715,33 @@ class Reminder:
                 await client.connect()
                 if gms == 0:
                     if mul:
-                        await asyncio.gather(*[client.send_message(self.users[user], self.text.get('1.0', END)[:-1], 
-                                                  schedule = timedelta(days = sch['days'], 
-                                                                       hours = sch['hours'],
-                                                                       minutes = sch['minutes'],
-                                                                       seconds = sch['seconds'])) for user in mul])
+                        await asyncio.gather(
+                            *[
+                                client.send_message(
+                                self.users[user], 
+                                self.text.get('1.0', END)[:-1], 
+                                schedule = timedelta(
+                                    days = sch['days'], 
+                                    hours = sch['hours'],
+                                    minutes = sch['minutes'],
+                                    seconds = sch['seconds']
+                                    )
+                                ) for user in mul
+                            ]
+                        )
                     else:
-                        await client.send_message(self.users[self.entto.get()], self.text.get('1.0', END)[:-1], 
-                                                  schedule = timedelta(days = sch['days'], 
-                                                                       hours = sch['hours'],
-                                                                       minutes = sch['minutes'],
-                                                                       seconds = sch['seconds']))
+                        await client.send_message(
+                            self.users[
+                                self.entto.get()
+                                ], 
+                            self.text.get('1.0', END)[:-1], 
+                            schedule = timedelta(
+                                days = sch['days'], 
+                                hours = sch['hours'],
+                                minutes = sch['minutes'],
+                                seconds = sch['seconds']
+                            )
+                        )
                 else:
                     orm = self.text.get('1.0', END)[:-1].split('\n')
                     while orm:
@@ -475,46 +754,80 @@ class Reminder:
                                 num = i
                                 break
                         if mul:
-                            await asyncio.gather(*[client.send_message(self.users[user], getm, 
-                                                      schedule = timedelta(days = sch['days'], 
-                                                                           hours = sch['hours'],
-                                                                           minutes = sch['minutes'],
-                                                                           seconds = sch['seconds'])) for user in mul])
+                            await asyncio.gather(
+                                *[
+                                    client.send_message(
+                                    self.users[user], 
+                                    getm, 
+                                    schedule = timedelta(
+                                        days = sch['days'], 
+                                        hours = sch['hours'],
+                                        minutes = sch['minutes'],
+                                        seconds = sch['seconds']
+                                        )
+                                    ) for user in mul
+                                ]
+                            )
                         else:
-                            await client.send_message(self.users[self.entto.get()], getm,
-                                                          schedule = timedelta(days = sch['days'], 
-                                                                               hours = sch['hours'],
-                                                                               minutes = sch['minutes'],
-                                                                               seconds = sch['seconds']))
+                            await client.send_message(
+                                self.users[
+                                    self.entto.get()
+                                    ], 
+                                getm,
+                                schedule = timedelta(
+                                    days = sch['days'], 
+                                    hours = sch['hours'],
+                                    minutes = sch['minutes'],
+                                    seconds = sch['seconds']
+                                )
+                            )
                         if num:
                             orm = orm[i:]
                             continue
                         else:
                             break
                 await client.disconnect()
-                ct = timedelta(days = sch['days'], hours = sch['hours'], minutes = sch['minutes'], seconds = sch['seconds'])
+                ct = timedelta(
+                    days = sch['days'], 
+                    hours = sch['hours'], 
+                    minutes = sch['minutes'], 
+                    seconds = sch['seconds']
+                )
                 ct = str(dt.today().replace(microsecond = 0) + ct)
                 tms = f'Message schedule sent at {ct}'
                 messagebox.showinfo('TeleTVG', tms, parent = self.root)
             except:
                 await client.disconnect()
-                messagebox.showinfo('TeleTVG', f'\n{sys.exc_info()}\n\n{msg}', parent = self.root) 
+                messagebox.showinfo(
+                    'TeleTVG', 
+                    f'\n{sys.exc_info()}\n\n{msg}', 
+                    parent = self.root
+                ) 
             
     def runsend(self):
         # Asyncio method of calling for running schedulers.
         
         if self.entto.get():
             if self.text.get('1.0', END)[:-1]:
-                stm = dict(days = self.sp1v.get(), 
-                           hours = self.sp2v.get(), 
-                           minutes = self.sp3v.get(), 
-                           seconds = self.sp4v.get(),
-                           )        
+                stm = dict(
+                    days = self.sp1v.get(), 
+                    hours = self.sp2v.get(), 
+                    minutes = self.sp3v.get(), 
+                    seconds = self.sp4v.get(),
+                )        
                 asyncio.get_event_loop().run_until_complete(self.runs(stm))
             else:
-                messagebox.showinfo('TeleTVG', 'Please write message!', parent = self.root)
+                messagebox.showinfo(
+                    'TeleTVG', 
+                    'Please write message!', 
+                    parent = self.root
+                )
         else:
-            messagebox.showinfo('TeleTVG', 'Please fill "To"!', parent = self.root)            
+            messagebox.showinfo(
+                'TeleTVG', 
+                'Please fill "To"!', 
+                parent = self.root
+            )            
                 
     async def sent(self):
         # Sending Telegram to anyone.
@@ -524,7 +837,10 @@ class Reminder:
             async with TelegramClient('ReminderTel', self.api_id, self.api_hash) as client:
                 await client.connect()
                 if gms == 0:
-                    await client.send_message(self.users[self.entto.get()], self.text.get('1.0', END)[:-1])
+                    await client.send_message(
+                        self.users[self.entto.get()], 
+                        self.text.get('1.0', END)[:-1]
+                    )
                 else:
                     orm = self.text.get('1.0', END)[:-1].split('\n')
                     while orm:
@@ -545,7 +861,11 @@ class Reminder:
                 await client.disconnect()
             self.text.delete('1.0', END)
         except:
-            messagebox.showinfo('TeleTVG', f'\n{sys.exc_info()}', parent = self.root)
+            messagebox.showinfo(
+                'TeleTVG', 
+                f'\n{sys.exc_info()}', 
+                parent = self.root
+            )
             await client.disconnect()
             
     def sentem(self):
@@ -568,9 +888,14 @@ class Reminder:
         try:
             async with TelegramClient('ReminderTel', self.api_id, self.api_hash) as client:
                 await client.connect()
-                await client.send_file(self.users[self.entto.get()], filename, caption = 'TreeViewGui')
+                await client.send_file(
+                    self.users[self.entto.get()], 
+                    filename, 
+                    caption = 'TreeViewGui'
+                )
                 await client.disconnect()
-            tms = f'Message finished sent at {dt.isoformat(dt.now().replace(microsecond = 0)).replace("T", " ")}'
+            tms = f'Message finished sent at \
+            {dt.isoformat(dt.now().replace(microsecond = 0)).replace("T", " ")}'
             messagebox.showinfo('TeleTVG', tms, parent = self.root)
         except:
             messagebox.showinfo('TeleTVG', f'\n{sys.exc_info()}', parent = self.root)
@@ -580,12 +905,16 @@ class Reminder:
         # Sending file using asyncio call
         
         if self.entto.get():
-            fpt = os.path.join(os.getcwd().rpartition('\\')[0], 'TVGPro')
-            ask = filedialog.askopenfilename(initialdir = fpt, filetypes = [("All files","*.*")], parent = self.root)
+            fpt = os.path.join(self.orip.parent, 'TVGPro')
+            ask = filedialog.askopenfilename(
+                initialdir = fpt, 
+                filetypes = [("All files","*.*")], 
+                parent = self.root
+            )
             if ask:
                 asyncio.get_event_loop().run_until_complete(self.sentfile(ask))
             else:
-                messagebox.showinfo('TeleTVG', 'Send file is aborted!', parent = self.root)            
+                messagebox.showinfo('TeleTVG', 'Send file is aborted!', parent = self.root)
         else:
             messagebox.showinfo('TeleTVG', 'Please fill "To" first!', parent = self.root)
             
@@ -599,6 +928,9 @@ class Reminder:
                 async for message in client.iter_messages(self.users[self.entto.get()], 15):
                     mtx = message.message if message.message else "(>^_^<)>Sticker/File<(>^_^<)"
                     msg = message.text
+                    if not self.plat.startswith('win'):
+                        mtx = ''.join(filter(lambda x: x in string.printable, mtx))
+                        msg = ''.join(filter(lambda x: x in string.printable, msg))
                     if message.out:
                         td = dt.ctime(dt.astimezone(message.date))
                         if msg:
@@ -617,7 +949,8 @@ class Reminder:
                 self.text2.config(state = 'disable')
                 self.text2.yview_moveto(1)
                 await client.disconnect()
-            self.afterid = self.root.after(60000, self.getrep)
+            if self.plat.startswith('win'):
+                self.afterid = self.root.after(60000, self.getrep)
         except Exception as e:
             await client.disconnect()
             messagebox.showerror('TeleTVG', f'{e}')
@@ -631,9 +964,11 @@ class Reminder:
             try:
                 if not asyncio.get_event_loop().is_running():
                     asyncio.get_event_loop().run_until_complete(self.rep())
-                    self.messages('<<<TeleTVG>>>\n\nGet Reply\n\nhas been updated!', 1200)
+                    if self.plat.startswith('win'):
+                        self.messages('<<<TeleTVG>>>\n\nGet Reply\n\nhas been updated!', 1200)
                 else:
-                    self.afterid = self.root.after(60000, self.getrep)
+                    if self.plat.startswith('win'):
+                        self.afterid = self.root.after(60000, self.getrep)
             except Exception as e:
                 messagebox.showwarning('TeleTVG', f'{e}')
         else:
@@ -649,8 +984,13 @@ class Reminder:
     async def getfile(self, amt: int = None):
         # Getting file from a user [get all TVG protected text file]
                    
-        path = os.path.join(os.getcwd().rpartition('\\')[0],'TeleTVGPro')
-        pathf = os.path.join(path, re.sub(r'\W+', '_', dt.isoformat(dt.now()).replace('T', '_')))
+        path = os.path.join(self.orip.parent,'TeleTVGPro')
+        pathf = os.path.join(
+            path, 
+            re.sub(
+                r'\W+', '_', dt.isoformat(dt.now()).replace('T', '_')
+            )
+        )
         os.mkdir(pathf)
         async with TelegramClient('ReminderTel', self.api_id, self.api_hash) as client:
             try:
@@ -659,13 +999,21 @@ class Reminder:
                 async for message in client.iter_messages(self.users[self.entto.get()], None):
                     if message.media:
                         if isinstance(message.media, types.MessageMediaDocument):
-                            if message.media.document.mime_type not in ['application/x-tgsticker', 'image/webp']:
+                            if message.media.document.mime_type not in [
+                                'application/x-tgsticker', 
+                                'image/webp'
+                                ]:
                                 if amt is not None:
                                     if amt > 0: amt -= 1 
                                     else: break
                                 num += 1
                                 await client.download_media(message, pathf)
-                        elif isinstance(message.media, (types.MessageMediaPhoto, types.MessageMediaContact)):
+                        elif isinstance(
+                            message.media, (
+                            types.MessageMediaPhoto, 
+                            types.MessageMediaContact
+                                )
+                            ):
                             if amt is not None:
                                 if amt > 0: amt -= 1 
                                 else: break
@@ -677,19 +1025,31 @@ class Reminder:
                 messagebox.showerror('TeleTVG', f'{e}', parent = self.root)
             finally:
                 if num:
-                    ask = messagebox.askyesno('TeleTVG', f'You have download {num} files, want to open file folder?')
+                    ask = messagebox.askyesno(
+                        'TeleTVG', 
+                        f'You have download {num} files, want to open file folder?', 
+                        parent = self.root
+                    )
                     if ask:
-                        os.startfile(pathf)
+                        if self.plat.startswith('win'):
+                            os.startfile(pathf)
+                        else:
+                            os.system(f'open "{pathf}"')
                 else:
                     os.rmdir(pathf)
-                    messagebox.showinfo('TeleTVG', 'Nothing downloaded!')
+                    messagebox.showinfo('TeleTVG', 'Nothing downloaded!', parent = self.root)
                 del path, pathf, num
         
     def gf(self):
         # Starting running asyncio get file.
         
         if self.entto.get():
-            ask = simpledialog.askinteger('TeleTVG', 'Download the last how many?[files/photos]\nIf 0 mean all files will be downloaded!', parent = self.root)
+            ask = simpledialog.askinteger(
+                'TeleTVG', 
+                'Download the last how many? \
+                [files/photos]\nIf 0 mean all files will be downloaded!', 
+                parent = self.root
+            )
             if ask:
                 asyncio.get_event_loop().run_until_complete(self.getfile(ask))
             else:
@@ -755,7 +1115,11 @@ class Reminder:
                                 r = 2
                                 while r:
                                     for name in self.users:
-                                        if event.widget.get().lower() in name.lower() and event.widget.get().lower() == name.lower()[:len(event.widget.get().lower())]:
+                                        if (
+                                            event.widget.get().lower() in name.lower() 
+                                            and event.widget.get().lower() == name.lower()
+                                            [:len(event.widget.get().lower())]
+                                           ):
                                             event.widget.delete(0, END)
                                             event.widget.insert(END, name)
                                             self.refidx = sorted(list(self.users)).index(name)
@@ -796,7 +1160,13 @@ class Reminder:
                         MyDialog.am.select_clear(self.sel[-1])
                         updatesel()
                         
-            groups = [ i.partition('_')[0]  for i in os.listdir(os.path.join('Telacc', self.chacc)) if '_group' in i ]        
+            groups = [
+                i.partition('_')[0]  for i in os.listdir(
+                    os.path.join(
+                        'Telacc', self.chacc
+                        )
+                    ) if '_group' in i 
+            ]        
             class MyDialog(simpledialog.Dialog):
                 am = None
                 ent = None
@@ -822,7 +1192,13 @@ class Reminder:
                     self.e3.grid(row = 0, column = 1, sticky = W, pady = (2, 0))
                     MyDialog.ent = self.e3
                     self.e3.bind('<KeyRelease>', sure)
-                    self.e4 = Button(fr2, text = 'Un/Select', command = selectmode, width = 16, relief = GROOVE)
+                    self.e4 = Button(
+                        fr2, 
+                        text = 'Un/Select', 
+                        command = selectmode, 
+                        width = 16, 
+                        relief = GROOVE
+                    )
                     self.e4.grid(row = 2, column = 1, sticky = W, pady = 2)
                     Label(fr2, text = 'Folder:').grid(row = 4, column = 0, sticky = W)
                     self.e2 = ttk.Combobox(fr2)
@@ -861,15 +1237,31 @@ class Reminder:
                             json.dump(rd, wj)   
                 elif d.folder:
                     if f'{d.folder}_group' in os.listdir(dest):
-                        ask = messagebox.askyesno('TeleTVG', 'Do you want to delete this group?', parent = self.root)
+                        ask = messagebox.askyesno(
+                            'TeleTVG', 
+                            'Do you want to delete this group?', 
+                            parent = self.root
+                        )
                         if ask:
                             shutil.rmtree(mfold)
                         else:
-                            messagebox.showinfo('TeleTVG', 'Deletion aborted!', parent = self.root)
+                            messagebox.showinfo(
+                                'TeleTVG', 
+                                'Deletion aborted!', 
+                                parent = self.root
+                            )
                     else:
-                        messagebox.showinfo('TeleTVG', 'Not created yet!', parent = self.root)
+                        messagebox.showinfo(
+                            'TeleTVG', 
+                            'Not created yet!', 
+                            parent = self.root
+                        )
                 else:
-                    messagebox.showinfo('TeleTVG', 'Please create folder first!', parent = self.root)
+                    messagebox.showinfo(
+                        'TeleTVG', 
+                        'Please create folder first!', 
+                        parent = self.root
+                    )
             self.refidx = None
             self.upt = tuple()
             self.sel = []
@@ -878,7 +1270,14 @@ class Reminder:
         # To get Users in group for edit. [deleting users in group]
         
         if self.lock is False:        
-            groups = [ i  for i in os.listdir(os.path.join('Telacc', self.chacc)) if '_group' in i ]
+            groups = [
+                i  for i in os.listdir(
+                    os.path.join(
+                        'Telacc', 
+                        self.chacc
+                        )
+                    ) if '_group' in i 
+            ]
             if groups:
                 self.lock = True
                 class MyDialog(simpledialog.Dialog):
@@ -914,7 +1313,11 @@ class Reminder:
                                         r = 2
                                         while r:
                                             for name in users:
-                                                if event.widget.get().lower() in name.lower() and event.widget.get().lower() == name.lower()[:len(event.widget.get().lower())]:
+                                                if (
+                                                    event.widget.get().lower() in name.lower() 
+                                                    and event.widget.get().lower() == name.lower()
+                                                    [:len(event.widget.get().lower())]
+                                                   ):
                                                     event.widget.delete(0, END)
                                                     event.widget.insert(END, name)
                                                     self.refidx = users.index(name)
@@ -980,7 +1383,13 @@ class Reminder:
                             self.e3.grid(row = 0, column = 1, sticky = W, pady = 2)
                             UserDialog.ent = self.e3
                             self.e3.bind('<KeyRelease>', sure)
-                            self.e4 = Button(fr2, text = 'Un/Select', command = selectmode, width = 16, relief = GROOVE)
+                            self.e4 = Button(
+                                fr2, 
+                                text = 'Un/Select', 
+                                command = selectmode, 
+                                width = 16, 
+                                relief = GROOVE
+                            )
                             self.e4.grid(row = 2, column = 1, sticky = W)
                             return self.e3
                             
@@ -1012,14 +1421,29 @@ class Reminder:
             if file:
                 async with TelegramClient('ReminderTel', self.api_id, self.api_hash) as client:
                     await client.connect()
-                    await asyncio.gather(*[client.send_file(self.users[user], file, caption = 'TreeViewGui') for user in sen])
+                    await asyncio.gather(
+                        *[
+                            client.send_file(
+                                self.users[user], 
+                                file, 
+                                caption = 'TreeViewGui'
+                            ) for user in sen
+                        ]
+                    )
                     await client.disconnect()
             else:
                 gms = int(len(self.text.get('1.0', END)[:-1])/4090)
                 async with TelegramClient('ReminderTel', self.api_id, self.api_hash) as client:
                     await client.connect()
                     if gms == 0:
-                        await asyncio.gather(*[client.send_message(self.users[user], self.text.get('1.0', END)[:-1]) for user in sen])
+                        await asyncio.gather(
+                            *[
+                                client.send_message(
+                                    self.users[user], 
+                                    self.text.get('1.0', END)[:-1]
+                                    ) for user in sen
+                            ]
+                        )
                     else:
                         orm = self.text.get('1.0', END)[:-1].split('\n')
                         while orm:
@@ -1031,14 +1455,22 @@ class Reminder:
                                 else:
                                     num = i
                                     break
-                            await asyncio.gather(*[client.send_message(self.users[user], getm) for user in sen])
+                            await asyncio.gather(
+                                *[
+                                    client.send_message(
+                                        self.users[user], 
+                                        getm
+                                        ) for user in sen
+                                ]
+                            )
                             if num:
                                 orm = orm[i:]
                                 continue
                             else:
                                 break
                     await client.disconnect()
-            tms = f'Message finished sent at {dt.isoformat(dt.now().replace(microsecond = 0)).replace("T", " ")}'
+            tms = f'Message finished sent at \
+            {dt.isoformat(dt.now().replace(microsecond = 0)).replace("T", " ")}'
             messagebox.showinfo('TeleTVG', tms, parent = self.root)
         except:
             messagebox.showinfo('TeleTVG', f'\n{sys.exc_info()}', parent = self.root)
@@ -1046,7 +1478,14 @@ class Reminder:
             
     def multisched(self):
         if self.lock is False:        
-            groups = [ i  for i in os.listdir(os.path.join('Telacc', self.chacc)) if '_group' in i ]
+            groups = [ 
+                i  for i in os.listdir(
+                    os.path.join(
+                        'Telacc', 
+                        self.chacc
+                        )
+                    ) if '_group' in i 
+            ]
             if groups:
                 if self.text.get('1.0', END)[:-1]:
                     sel = list(self.users)
@@ -1068,23 +1507,45 @@ class Reminder:
                     d = MyDialog(self.root)
                     self.lock = False
                     if d.result:
-                        tkd = os.path.join('Telacc', self.chacc, d.result, f'{d.result.rpartition("_")[0]}.json')
+                        tkd = os.path.join(
+                            'Telacc', 
+                            self.chacc, 
+                            d.result, 
+                            f'{d.result.rpartition("_")[0]}.json'
+                        )
                         with open(tkd, 'r') as us:
                             rd = dict(json.load(us))
-                        unsen = [i for i in rd[d.result.rpartition("_")[0]] if i not in sel]
+                        unsen = [
+                            i for i in rd[
+                                d.result.rpartition("_")[0]
+                                ] if i not in sel
+                        ]
                         if unsen:
-                            messagebox.showinfo('TeleTVG', 'There are {len(unsen)} user/s:\n{unsen}\nneed updated!', parent = self.root)
+                            messagebox.showinfo(
+                                'TeleTVG', 
+                                'There are {len(unsen)} user/s:\n{unsen}\nneed updated!', 
+                                parent = self.root
+                            )
                         else:
-                            sen = [i for i in rd[d.result.rpartition("_")[0]] if i in sel]
+                            sen = [
+                                i for i in rd[
+                                    d.result.rpartition("_")[0]
+                                    ] if i in sel
+                            ]
                             if sen:
-                                stm = dict(days = self.sp1v.get(), 
-                                           hours = self.sp2v.get(), 
-                                           minutes = self.sp3v.get(), 
-                                           seconds = self.sp4v.get(),
-                                          )        
+                                stm = dict(
+                                    days = self.sp1v.get(), 
+                                    hours = self.sp2v.get(), 
+                                    minutes = self.sp3v.get(), 
+                                    seconds = self.sp4v.get(),
+                                )
                                 asyncio.get_event_loop().run_until_complete(self.runs(stm, sen))
                             else:
-                                messagebox.showinfo('TeleTVG', 'This group is no longer exist, please delete it!', parent = self.root)
+                                messagebox.showinfo(
+                                    'TeleTVG', 
+                                    'This group is no longer exist, please delete it!', 
+                                    parent = self.root
+                                )
                 else:
                     messagebox.showinfo('TeleTVG', 'No message to send?', parent = self.root)
                     
@@ -1114,18 +1575,31 @@ class Reminder:
                     d = MyDialog(self.root)
                     self.lock = False
                     if d.result:
-                        tkd = os.path.join('Telacc', self.chacc, d.result, f'{d.result.rpartition("_")[0]}.json')
+                        tkd = os.path.join(
+                            'Telacc', 
+                            self.chacc, 
+                            d.result, 
+                            f'{d.result.rpartition("_")[0]}.json'
+                        )
                         with open(tkd, 'r') as us:
                             rd = dict(json.load(us))
                         unsen = [i for i in rd[d.result.rpartition("_")[0]] if i not in sel]
                         if unsen:
-                            messagebox.showinfo('TeleTVG', f'There are {len(unsen)} user/s:\n{unsen}\nneed updated!', parent = self.root)
+                            messagebox.showinfo(
+                                'TeleTVG', 
+                                f'There are {len(unsen)} user/s:\n{unsen}\nneed updated!', 
+                                parent = self.root
+                            )
                         else:
                             sen = [i for i in rd[d.result.rpartition("_")[0]] if i in sel]
                             if sen:
                                 asyncio.get_event_loop().run_until_complete(self.mulsend(sen))
                             else:
-                                messagebox.showinfo('TeleTVG', 'This group is no longer exist, please delete it!', parent = self.root)
+                                messagebox.showinfo(
+                                    'TeleTVG', 
+                                    'This group is no longer exist, please delete it!', 
+                                    parent = self.root
+                                )
                 else:
                     messagebox.showinfo('TeleTVG', 'No message to send?', parent = self.root)
                     
@@ -1135,7 +1609,14 @@ class Reminder:
         if self.lock is False:        
             groups = [ i  for i in os.listdir(os.path.join('Telacc', self.chacc)) if '_group' in i ]
             if groups:
-                askfile = filedialog.askopenfilename(initialdir = os.path.join(os.getcwd().rpartition('\\')[0], 'TVGPro'), filetypes = [("All files","*.*")], parent = self.root)
+                askfile = filedialog.askopenfilename(
+                    initialdir = os.path.join(
+                        self.orip.parent, 
+                        'TVGPro'
+                        ), 
+                    filetypes = [("All files","*.*")], 
+                    parent = self.root
+                )
                 if askfile:
                     sel = list(self.users)
                     self.lock = True
@@ -1156,18 +1637,33 @@ class Reminder:
                     d = MyDialog(self.root)
                     self.lock = False
                     if d.result:
-                        tkd = os.path.join('Telacc', self.chacc, d.result, f'{d.result.rpartition("_")[0]}.json')
+                        tkd = os.path.join(
+                            'Telacc', 
+                            self.chacc, 
+                            d.result, 
+                            f'{d.result.rpartition("_")[0]}.json'
+                        )
                         with open(tkd, 'r') as us:
                             rd = dict(json.load(us))
                         unsen = [i for i in rd[d.result.rpartition("_")[0]] if i not in sel]
                         if unsen:
-                            messagebox.showinfo('TeleTVG', f'There are {len(unsen)} user/s:\n{unsen}\nneed updated!', parent = self.root)
+                            messagebox.showinfo(
+                                'TeleTVG', 
+                                f'There are {len(unsen)} user/s:\n{unsen}\nneed updated!', 
+                                parent = self.root
+                            )
                         else:
                             sen = [i for i in rd[d.result.rpartition("_")[0]] if i in sel]
                             if sen:
-                                asyncio.get_event_loop().run_until_complete(self.mulsend(sen, askfile))
+                                asyncio.get_event_loop().run_until_complete(
+                                    self.mulsend(sen, askfile)
+                                )
                             else:
-                                messagebox.showinfo('TeleTVG', 'This group is no longer exist, please delete it!', parent = self.root)
+                                messagebox.showinfo(
+                                    'TeleTVG', 
+                                    'This group is no longer exist, please delete it!', 
+                                    parent = self.root
+                                )
                 else:
                     messagebox.showinfo('TeleTVG', 'Send files aborted!', parent = self.root)
                     
@@ -1183,32 +1679,50 @@ class Reminder:
     def lg(self):
         # Call Async Log Out from Telegram.
         
-        ask = messagebox.askyesno('TeleTVG', 'Do you really want to log-out?\n[You have to log-in again next time, all over again!]')
+        ask = messagebox.askyesno(
+            'TeleTVG', 
+            'Do you really want to log-out?\n[You have to log-in again next time, all over again!]'
+        )
         if ask:
             asyncio.get_event_loop().run_until_complete(self.logout())
             if self.result:
-                ask = messagebox.askyesno('TeleTVG', 'Delete account folder and its sub-folders?', parent = self.root)
+                ask = messagebox.askyesno(
+                    'TeleTVG', 
+                    'Delete account folder and its sub-folders?', 
+                    parent = self.root
+                )
                 if ask: shutil.rmtree(os.path.join('Telacc', self.chacc))
                 self.winexit()
                 
     def opfold(self):
         # Open folder for all downloaded files folders.
         
-        path = os.path.join(os.getcwd().rpartition('\\')[0], 'TeleTVGPro')
+        path = os.path.join(self.orip.parent, 'TeleTVGPro')
         if os.listdir(path):
-            os.startfile(path)
+            if self.plat.startswith('win'):
+                os.startfile(path)
+            else:
+                os.system(f'open "{path}"')
         else:
             messagebox.showinfo('TeleTVG', 'No downloded files yet!')
 
     def help(self, event = None):
         # Help function, that open tutorial pdf.
         
-        os.startfile(os.path.join(__file__.rpartition('\\')[0], 'TeleTVG.pdf'))
+        pth = Path(__file__)
+        if os.path.exists(pth.joinpath(pth.parent, 'TeleTVG.pdf')):
+            if self.plat.startswith('win'):
+                os.startfile(os.path.join(pth.parent, 'TeleTVG.pdf'))
+            else:
+                os.system(f'open "{path}"')
+        del pth
 
 def bepath():
     # checking path.
-    
-    chpth = os.path.join(os.path.expanduser('~\\appdata\\local'), 'TTVG')
+    if platform.startswith('win'):
+        chpth = Path(os.path.expanduser('~')).joinpath('appdata', 'local', 'TTVG')
+    else:
+        chpth = Path(os.path.expanduser('~')).joinpath('TTVG')
     if os.path.isdir(chpth):
         os.chdir(chpth)
     else:
@@ -1273,7 +1787,7 @@ def cenen(root):
             del d
             return None
     else:
-        class MyDialog(simpledialog.Dialog):
+        class ApiDialog(simpledialog.Dialog):
                 
             def body(self, master):
                 Label(master, text = 'API: ').grid(row=0, column = 0, sticky = E)
@@ -1290,18 +1804,21 @@ def cenen(root):
             def apply(self):
                 self.result = self.e1.get(), self.e2.get(), self.e3.get() 
                         
-        d = MyDialog(root)
+        d = ApiDialog(root)
         if d.result:
             if all([d.result[0], d.result[1], d.result[2]]):
                 v = io.StringIO()
                 with redirect_stdout(v):                
-                    cmsk(d.result[0], 'TELE_API', d.result[2])
-                    cmsk(d.result[1], 'TELE_HASH', d.result[2])
-                messagebox.showinfo('TeleTVG', f'{v.getvalue()}\nPlease restart again!', parent = root)
+                    cmsk(d.result[0], d.result[2], 'TELE_API')
+                    cmsk(d.result[1], d.result[2], 'TELE_HASH')
+                messagebox.showinfo(
+                    'TeleTVG', 
+                    f'{v.getvalue()}\nPlease restart again!'
+                )
                 v.flush()
                 root.destroy()
             else:
-                messagebox.showinfo('TeleTVG', 'Incomplete!!!', parent = root)
+                messagebox.showinfo('TeleTVG', 'Incomplete!!!')
                 root.destroy()
         else:
             root.destroy()
@@ -1311,7 +1828,7 @@ def main():
     # Please create encryption for app_id and app_hash for security.
     
     bepath()
-    if os.environ.get('TELE_API') and os.environ.get('TELE_HASH'):
+    if all(i in os.environ for i in ['TELE_API', 'TELE_HASH']):
         ope = os.path.join(os.getcwd(), 's_error.tvg')
         if not 'TeleTVGPro' in os.listdir():
             os.mkdir('TeleTVGPro')
@@ -1322,7 +1839,8 @@ def main():
             os.chdir('Tele_TVG')
         root = Tk()
         root.withdraw()
-        if ope.rpartition('\\')[2] in os.listdir(ope.rpartition('\\')[0]):
+        
+        if os.path.exists(ope):
             try:
                 if os.path.exists('ReminderTel.session'): 
                     os.remove('ReminderTel.session')
@@ -1330,17 +1848,17 @@ def main():
             except Exception as e:
                 messagebox.showerror('TeleTVG', f'{e}', parent = root)
                 root.destroy()
-                sys.exit()
-        if 'Telacc' not in os.listdir():
+        if not os.path.exists('Telacc'):
             os.mkdir('Telacc')
-        if (getah := cenen(root)):
+        getah = cenen(root)
+        if getah:
             api = getah[0]
             hash_ = getah[1]
             Reminder.API = api
             Reminder.HASH_ = hash_
             del getah
             begin = Reminder(root)
-            if 'ReminderTel.session' not in os.listdir():
+            if not os.path.exists('ReminderTel.session'):
                 if (ask := dial(begin.root)):
                     try:
                         # Reference stdout to variable:
@@ -1348,16 +1866,26 @@ def main():
                         # how-to-capture-stdout-output-from-a-python-function-call
                         v = io.StringIO()
                         with redirect_stdout(v):
-                            client = TelegramClient('ReminderTel', api, hash_). \
-                            start(ask, lambda: dial(begin.root, 2), 
-                            code_callback = lambda: dial(begin.root, 1))
+                            client = TelegramClient(
+                                'ReminderTel', 
+                                api, 
+                                hash_
+                                ).start(
+                                    ask, 
+                                    lambda: dial(begin.root, 2),
+                                    code_callback = lambda: dial(begin.root, 1)
+                            )
                         client.disconnect()
                         messagebox.showinfo('TeleTVG', f'{v.getvalue()[:-1]}')
                         v.flush()
                         try:
                             del api, hash_
-                            asyncio.get_event_loop().run_until_complete(begin.acc())
-                            asyncio.get_event_loop().run_until_complete(begin.filcomb())
+                            asyncio.get_event_loop().run_until_complete(
+                                begin.acc()
+                            )
+                            asyncio.get_event_loop().run_until_complete(
+                                begin.filcomb()
+                            )
                             begin.entto.focus_force()
                             begin.root.deiconify()
                             begin.root.mainloop()
@@ -1377,18 +1905,26 @@ def main():
             else:
                 try:
                     del api, hash_
-                    asyncio.get_event_loop().run_until_complete(begin.acc())
-                    asyncio.get_event_loop().run_until_complete(begin.filcomb())
+                    asyncio.get_event_loop().run_until_complete(
+                        begin.acc()
+                    )
+                    asyncio.get_event_loop().run_until_complete(
+                        begin.filcomb()
+                    )
                     begin.entto.focus_force()
                     begin.root.deiconify()
                     begin.root.mainloop()
                 except:
                     with open(ope, 'w') as ers:
                         ers.write(str(sys.exc_info()))                    
-                    messagebox.showerror('TreeViewGui', f'{sys.exc_info()}', parent = begin.root)
+                    messagebox.showerror(
+                        'TreeViewGui', 
+                        f'{sys.exc_info()}', 
+                        parent = begin.root
+                    )
                     begin.winexit()
         else:
-            messagebox.showinfo('TeleTVG', 'Please give right password!!!', parent = root)
+            messagebox.showinfo('TeleTVG', 'Please give right password!!!')
             root.destroy()
     else:
         root = Tk()

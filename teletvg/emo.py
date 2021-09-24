@@ -5,7 +5,8 @@
 from tkinter import *
 from tkinter import messagebox, simpledialog, ttk
 import os
-from .DataB import Datab as db
+from .dbase import Datab as db
+from pathlib import Path
 
 class Emo:
     status = True
@@ -194,7 +195,10 @@ class Emo:
                     Emo.paste.text.see(INSERT)
                     Emo.paste.text.focus()
                 else:
-                    if 'entry' in [str(i).rpartition('!')[2] for i in Emo.paste.root.winfo_children()[0].winfo_children()]:
+                    if 'entry' in [
+                        str(i).rpartition('!')[2] 
+                        for i in Emo.paste.root.winfo_children()[0].winfo_children()
+                        ]:
                         if Emo.paste.entry.get() not in ['parent', 'child']:
                             Emo.paste.entry.insert(INSERT, lj)
                         else:
@@ -222,26 +226,30 @@ class Emo:
         # Saving emoji indexes using json database.
         
         if self.sel and not self.paste.text.tag_ranges('sel'):
-            nm = simpledialog.askstring('Emo', 'Name your marking: [if name is exist, will overwrite!]', parent = self.root)
-            if nm:            
-                if 'marking.json' in os.listdir(Emo.pathn):
-                    mrk = db(os.path.join(Emo.pathn,'marking'))
-                    m = {f'{nm}': self.sel}
+            nm = simpledialog.askstring(
+                'Emo', 
+                'Name your marking: [if name is exist, will overwrite!]', 
+                parent = self.root
+            )
+            if nm:  
+                mrk = db(os.path.join(Emo.pathn,'marking'))
+                m = iter([(f'{nm}', self.sel)])                
+                if os.path.exists(mrk.pname):
                     mrk.indata(m)
-                    self.lbe.selection_clear(0, END)
-                    self.sel = []
-                    self.upt = tuple()
                 else:
-                    mrk = db(os.path.join(Emo.pathn,'marking'))
-                    m = {f'{nm}': self.sel}
                     mrk.createdb(m)
-                    self.lbe.selection_clear(0, END)
-                    self.sel = []
-                    self.upt = tuple()
+                self.lbe.selection_clear(0, END)
+                self.sel = []
+                self.upt = tuple()
+                del mrk, m
             else:
                 messagebox.showinfo('Emo', 'Saving Mark aborted!', parent = self.root)
         elif self.paste.text.tag_ranges('sel'):
-            nm = simpledialog.askstring('Emo', 'Name your marking: [if name is exist, will overwrite!]', parent = self.root)
+            nm = simpledialog.askstring(
+                'Emo', 
+                'Name your marking: [if name is exist, will overwrite!]', 
+                parent = self.root
+            )
             if nm:
                 cke = [i for i in list(self.lib.values())]
                 ge = self.paste.text.selection_get()
@@ -252,21 +260,19 @@ class Emo:
                     else:
                         ge = j
                         break
-                del cke
+                del cke, ge
                 if m:
                     self.paste.text.tag_remove('sel', 'sel.first', 'sel.last')
-                    m = {f'{nm}': m}
-                    if 'marking.json' in os.listdir(Emo.pathn):
-                        mrk = db(os.path.join(Emo.pathn,'marking'))
+                    mrk = db(os.path.join(Emo.pathn,'marking'))
+                    m = iter([(f'{nm}', m)])
+                    if os.path.exists(mrk.pname):
                         mrk.indata(m)
                     else:
-                        mrk = db(os.path.join(Emo.pathn,'marking'))
                         mrk.createdb(m)
                     self.paste.text.mark_set('insert', INSERT)
                 else:
                     messagebox.showinfo('Emo', f'{ge} is not emoji!', parent = self.root)
                 del m
-                del ge
             else:
                 messagebox.showinfo('Emo', 'Saving Mark aborted!', parent = self.root)                
         else:
@@ -292,8 +298,7 @@ class Emo:
                             return self.e1
                     
                         def apply(self):
-                            self.result = mrk.takedat(self.e1.get())
-                    
+                            self.result = mrk.takedat(self.e1.get())                   
                     d = MyDialog(self.root)
                     self.lock = False
                     if d.result:
@@ -306,12 +311,15 @@ class Emo:
                                 Emo.paste.text.see(INSERT)
                                 Emo.paste.text.focus()
                             else:
-                                if 'entry' in [str(i).rpartition('!')[2] for i in Emo.paste.root.winfo_children()[0].winfo_children()]:
+                                if 'entry' in [
+                                    str(i).rpartition('!')[2] 
+                                    for i in Emo.paste.root.winfo_children()[0].winfo_children()
+                                    ]:
                                     if Emo.paste.entry.get() not in ['parent', 'child']:
                                         Emo.paste.entry.insert(INSERT, cope)
                                     else:
                                         Emo.paste.entry.delete(0, END)
-                                        Emo.paste.entry.insert(END, cope)                                    
+                                        Emo.paste.entry.insert(END, cope)
                                     Emo.paste.entry.icursor(END)
                                     Emo.paste.entry.focus()
                                 else:
@@ -325,7 +333,11 @@ class Emo:
                         del cope
                         del d.result
                     else:
-                        ask = messagebox.askyesno('Emo', 'Do you want delete Mark?', parent = self.root)
+                        ask = messagebox.askyesno(
+                            'Emo', 
+                            'Do you want delete Mark?', 
+                            parent = self.root
+                        )
                         if ask:
                             if self.lock is False:
                                 if 'marking.json' in os.listdir(Emo.pathn):
@@ -350,11 +362,23 @@ class Emo:
                                     if d.result:
                                         mrk.deldata(d.result)
                                 else:
-                                    messagebox.showinfo('Emo', 'No database, please save some first!', parent = self.root)
+                                    messagebox.showinfo(
+                                        'Emo', 
+                                        'No database, please save some first!', 
+                                        parent = self.root
+                                    )
                 else:
-                    messagebox.showinfo('Emo', 'Database is empty, please save some first!', parent = self.root)
+                    messagebox.showinfo(
+                        'Emo', 
+                        'Database is empty, please save some first!', 
+                        parent = self.root
+                    )
             else:
-                messagebox.showinfo('Emo', 'No database, please save some first!', parent = self.root)
+                messagebox.showinfo(
+                    'Emo', 
+                    'No database, please save some first!', 
+                    parent = self.root
+                )
                 
     def delwin(self, event = None):
         # Exit emoji window.
@@ -369,13 +393,13 @@ class Emo:
 def main(paste = None):
     # Create Emoji window for one time until it close.
 
-    path = os.getcwd().rpartition('\\')[0]
-    if 'emodb' not in os.listdir(path):
-        os.mkdir(os.path.join(path, 'emodb'))
+    path = Path(os.getcwd())
+    if not os.path.exists(os.path.join(path.parent, 'emodb')):
+        os.mkdir(os.path.join(path.parent, 'emodb'))
     if Emo.status:
-        Emo.pathn = os.path.join(path, 'emodb')
+        Emo.pathn = os.path.join(path.parent, 'emodb')
         Emo.status = False
-        Emo.emop = os.path.join(__file__.rpartition('\\')[0], 'emoj.txt')
+        Emo.emop = os.path.join(Path(__file__).parent, 'emoj.txt')
         if paste:
             Emo.paste = paste
         root = Toplevel()

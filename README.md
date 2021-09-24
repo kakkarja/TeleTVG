@@ -57,3 +57,5 @@ main()
 ### TIPS
 * **If user want to copy with "Ctrl-v" on Get Reply message screen, make sure on the Send Message screen is empty. [Only works in Windows]**
     * **"COPY" function only works on editable screen [Send Message screen].** 
+
+![TeleTVG](/pics/TeleTVG.png)

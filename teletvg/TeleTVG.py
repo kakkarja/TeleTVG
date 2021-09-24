@@ -12,6 +12,7 @@ import string
 import asyncio
 import shutil
 from . import emo
+from .dbase import Ziper
 import os
 import sys
 import json
@@ -28,6 +29,7 @@ class Reminder:
     """
     API = None
     HASH_ = None
+    ARCH = None
     RESZ = None
     STOP_A = False
     def __init__(self, root):
@@ -79,7 +81,8 @@ class Reminder:
         self.result = None
         self.api_id = Reminder.API
         self.api_hash = Reminder.HASH_
-        del Reminder.API, Reminder.HASH_
+        self.arch = Reminder.ARCH
+        del Reminder.API, Reminder.HASH_, Reminder.ARCH
         self.users = {}
         if self.plat.startswith('win'):
             self.stl = ttk.Style(self.root)
@@ -384,17 +387,11 @@ class Reminder:
         
         if self.STOP_A:
             self.STOP_A = False
-            if self.plat.startswith('win'):
-                self.messages('<<Auto-Text>>\n\nis enabled!', 700)
-            else:
-                messagebox.showinfo('TeleTVG', 'Auto-Text is enabled!')
+            self.messages('<<Auto-Text>>\n\nis enabled!', 700)
         else:
             self.STOP_A = True
-            if self.plat.startswith('win'):
-                self.messages('<<Auto-Text>>\n\nis disabled!', 700)
-            else:
-                messagebox.showinfo('TeleTVG', 'Auto-Text is disabled!')
-                
+            self.messages('<<Auto-Text>>\n\nis disabled!', 700)
+            
     def messages(self, m: str, t_out: int):
         # Message for informing.
         
@@ -408,8 +405,15 @@ class Reminder:
         root.geometry(f'300x300+{wd}+{hg}')
         root.overrideredirect(1)
         a = Message(master= root)
+        if not self.plat.startswith('win'):
+            a.tk.call(
+                "::tk::unsupported::MacWindowStyle", 
+                "style", 
+                root._w, 
+                "plain", 
+                "noTitleBar"
+            )
         a.pack()
-        a.tk_strictMotif(1)
         frm = Frame(a, borderwidth = 7, bg = 'dark blue', width = 250, height = 250)
         frm.pack(fill = 'both', expand = 1)
         tx = m
@@ -652,6 +656,9 @@ class Reminder:
         if emo.Emo.status is False:
             emo.Emo.mainon.destroy()
         self.root.destroy()
+        if os.path.exists('ReminderTel.session'):
+            archv('ReminderTel', self.arch)
+            os.remove('ReminderTel.session')
             
     def paste(self, event = None):
         # Paste any copied text.
@@ -894,8 +901,10 @@ class Reminder:
                     caption = 'TreeViewGui'
                 )
                 await client.disconnect()
-            tms = f'Message finished sent at \
-            {dt.isoformat(dt.now().replace(microsecond = 0)).replace("T", " ")}'
+            tms = (
+                f'Message finished sent at ' 
+                f'{dt.isoformat(dt.now().replace(microsecond = 0)).replace("T", " ")}'
+            )
             messagebox.showinfo('TeleTVG', tms, parent = self.root)
         except:
             messagebox.showinfo('TeleTVG', f'\n{sys.exc_info()}', parent = self.root)
@@ -908,9 +917,9 @@ class Reminder:
             fpt = os.path.join(self.orip.parent, 'TVGPro')
             ask = filedialog.askopenfilename(
                 initialdir = fpt, 
-                filetypes = [("All files","*.*")], 
-                parent = self.root
+                filetypes = [("All files","*.*")]            
             )
+            self.root.focus()
             if ask:
                 asyncio.get_event_loop().run_until_complete(self.sentfile(ask))
             else:
@@ -949,8 +958,7 @@ class Reminder:
                 self.text2.config(state = 'disable')
                 self.text2.yview_moveto(1)
                 await client.disconnect()
-            if self.plat.startswith('win'):
-                self.afterid = self.root.after(60000, self.getrep)
+            self.afterid = self.root.after(60000, self.getrep)
         except Exception as e:
             await client.disconnect()
             messagebox.showerror('TeleTVG', f'{e}')
@@ -964,11 +972,9 @@ class Reminder:
             try:
                 if not asyncio.get_event_loop().is_running():
                     asyncio.get_event_loop().run_until_complete(self.rep())
-                    if self.plat.startswith('win'):
-                        self.messages('<<<TeleTVG>>>\n\nGet Reply\n\nhas been updated!', 1200)
+                    self.messages('<<<TeleTVG>>>\n\nGet Reply\n\nhas been updated!', 1200)
                 else:
-                    if self.plat.startswith('win'):
-                        self.afterid = self.root.after(60000, self.getrep)
+                    self.afterid = self.root.after(60000, self.getrep)
             except Exception as e:
                 messagebox.showwarning('TeleTVG', f'{e}')
         else:
@@ -1469,14 +1475,18 @@ class Reminder:
                             else:
                                 break
                     await client.disconnect()
-            tms = f'Message finished sent at \
-            {dt.isoformat(dt.now().replace(microsecond = 0)).replace("T", " ")}'
+            tms = (
+                f'Message finished sent at '
+                f'{dt.isoformat(dt.now().replace(microsecond = 0)).replace("T", " ")}'
+            )
             messagebox.showinfo('TeleTVG', tms, parent = self.root)
         except:
             messagebox.showinfo('TeleTVG', f'\n{sys.exc_info()}', parent = self.root)
             await client.disconnect()
             
     def multisched(self):
+        # Multi scheduling to a group.
+        
         if self.lock is False:        
             groups = [ 
                 i  for i in os.listdir(
@@ -1609,14 +1619,12 @@ class Reminder:
         if self.lock is False:        
             groups = [ i  for i in os.listdir(os.path.join('Telacc', self.chacc)) if '_group' in i ]
             if groups:
+                pthd = os.path.join(self.orip.parent, 'TVGPro')
                 askfile = filedialog.askopenfilename(
-                    initialdir = os.path.join(
-                        self.orip.parent, 
-                        'TVGPro'
-                        ), 
-                    filetypes = [("All files","*.*")], 
-                    parent = self.root
+                    initialdir = pthd, 
+                    filetypes = [("All files","*.*")]
                 )
+                self.root.focus_force()
                 if askfile:
                     sel = list(self.users)
                     self.lock = True
@@ -1685,6 +1693,7 @@ class Reminder:
         )
         if ask:
             asyncio.get_event_loop().run_until_complete(self.logout())
+            if os.path.exists('ReminderTel.7z'): os.remove('ReminderTel.7z')
             if self.result:
                 ask = messagebox.askyesno(
                     'TeleTVG', 
@@ -1714,11 +1723,12 @@ class Reminder:
             if self.plat.startswith('win'):
                 os.startfile(os.path.join(pth.parent, 'TeleTVG.pdf'))
             else:
-                os.system(f'open "{path}"')
+                os.system(f'open "{os.path.join(pth.parent, "TeleTVG.pdf")}"')
         del pth
 
 def bepath():
     # checking path.
+    
     if platform.startswith('win'):
         chpth = Path(os.path.expanduser('~')).joinpath('appdata', 'local', 'TTVG')
     else:
@@ -1776,10 +1786,11 @@ def cenen(root):
             with redirect_stdout(v):
                 ta = reading(os.environ.get('TELE_API'), d.result)
                 th = reading(os.environ.get('TELE_HASH'), d.result)
+                arc = reading(os.environ.get('ARCH_SESS'), d.result)
             v.flush()
             if ta and th:
                 del d
-                return ta, th
+                return ta, th, arc
             else:
                 del d
                 return None
@@ -1807,10 +1818,12 @@ def cenen(root):
         d = ApiDialog(root)
         if d.result:
             if all([d.result[0], d.result[1], d.result[2]]):
+                import secrets as st
                 v = io.StringIO()
                 with redirect_stdout(v):                
                     cmsk(d.result[0], d.result[2], 'TELE_API')
                     cmsk(d.result[1], d.result[2], 'TELE_HASH')
+                    cmsk(st.token_hex(6), d.result[2], 'ARCH_SESS')
                 messagebox.showinfo(
                     'TeleTVG', 
                     f'{v.getvalue()}\nPlease restart again!'
@@ -1822,7 +1835,17 @@ def cenen(root):
                 root.destroy()
         else:
             root.destroy()
-            
+
+def archv(name: str, pssd: str, ex: bool = False):
+    z = Ziper('ReminderTel.session')
+    try:
+        if not ex:
+            z.ziper7z(name, pssd)
+        else:
+            z.extfile(name, pssd)
+    except Exception as e:
+        raise e
+         
 def main():
     # Start app.
     # Please create encryption for app_id and app_hash for security.
@@ -1854,11 +1877,13 @@ def main():
         if getah:
             api = getah[0]
             hash_ = getah[1]
+            arch = getah[2]
             Reminder.API = api
             Reminder.HASH_ = hash_
+            Reminder.ARCH = arch
             del getah
             begin = Reminder(root)
-            if not os.path.exists('ReminderTel.session'):
+            if all(not os.path.exists(f) for f in  ['ReminderTel.session', 'ReminderTel.7z']) :
                 if (ask := dial(begin.root)):
                     try:
                         # Reference stdout to variable:
@@ -1878,8 +1903,9 @@ def main():
                         client.disconnect()
                         messagebox.showinfo('TeleTVG', f'{v.getvalue()[:-1]}')
                         v.flush()
+                        archv('ReminderTel', arch)
                         try:
-                            del api, hash_
+                            del api, hash_, arch
                             asyncio.get_event_loop().run_until_complete(
                                 begin.acc()
                             )
@@ -1904,7 +1930,8 @@ def main():
                     begin.winexit()                
             else:
                 try:
-                    del api, hash_
+                    archv('ReminderTel', arch, True)
+                    del api, hash_, arch
                     asyncio.get_event_loop().run_until_complete(
                         begin.acc()
                     )

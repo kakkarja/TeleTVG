@@ -938,8 +938,16 @@ class Reminder:
                     mtx = message.message if message.message else "(>^_^<)>Sticker/File<(>^_^<)"
                     msg = message.text
                     if not self.plat.startswith('win'):
-                        mtx = ''.join(filter(lambda x: x in string.printable, mtx))
-                        msg = ''.join(filter(lambda x: x in string.printable, msg))
+                        mtx = ''.join(
+                            filter(
+                                lambda x: x in string.printable, mtx
+                                )
+                            ) if mtx is not None else None
+                        msg = ''.join(
+                            filter(
+                                lambda x: x in string.printable, msg
+                                )
+                            ) if msg is not None else None
                     if message.out:
                         td = dt.ctime(dt.astimezone(message.date))
                         if msg:

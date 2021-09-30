@@ -51,7 +51,6 @@ main()
 * **Some bugs fix on "GET REPLY" function.**
     * **While event-loop on going, it will not run "GET REPLY" function.**
     * **Will reassign "GET REPLY" again for next loop.**
-    * **In MacOS X, "GET REPLY" will not loop.**
 * **Add for Help TeleTVG.pdf.**
     * **"Ctrl+F1" in Windows and "fn+F1" in MacOS X.**
 ### TIPS

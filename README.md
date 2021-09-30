@@ -53,6 +53,7 @@ main()
     * **Will reassign "GET REPLY" again for next loop.**
 * **Add for Help TeleTVG.pdf.**
     * **"Ctrl+F1" in Windows and "fn+F1" in MacOS X.**
+* **Add protection archive.**
 ### TIPS
 * **If user want to copy with "Ctrl-v" on Get Reply message screen, make sure on the Send Message screen is empty. [Only works in Windows]**
     * **"COPY" function only works on editable screen [Send Message screen].** 

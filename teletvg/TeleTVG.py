@@ -807,7 +807,7 @@ class Reminder:
                 await client.disconnect()
                 messagebox.showinfo(
                     'TeleTVG', 
-                    f'\n{sys.exc_info()}\n\n{msg}', 
+                    f'\n{sys.exc_info()}', 
                     parent = self.root
                 ) 
             

@@ -46,7 +46,8 @@ main()
 * **Can Request for additional module:**
     * **Need support donation :heart:**
 * **For MacOS X:**
-    * **Emoji is disabled.[tkinter issue!]**
+    * **~~Emoji is disabled.[tkinter issue!]~~**
+    * **Working in Python 3.10**
 ### Changes:
 * **Some bugs fix on "GET REPLY" function.**
     * **While event-loop on going, it will not run "GET REPLY" function.**

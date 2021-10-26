@@ -7,6 +7,8 @@ from tkinter import messagebox, simpledialog, ttk
 import os
 from .dbase import Datab as db
 from pathlib import Path
+from ast import literal_eval
+from sys import platform as plat
 
 class Emo:
     status = True
@@ -19,10 +21,11 @@ class Emo:
         Creating Emoji for ReminderTel.
         """
         self.root = root
-        self.root.title('Emojies')
-        self.root.protocol('WM_DELETE_WINDOW', self.delwin)
-        self.root.attributes('-toolwindow', 1)
-        self.root.attributes('-topmost', 1)
+        self.root.title("Emojies")
+        self.root.protocol("WM_DELETE_WINDOW", self.delwin)
+        if plat.startswith('win'):
+            self.root.attributes("-toolwindow", 1)
+            self.root.attributes("-topmost", 1)
         self.root.resizable(False, False)
         self.root.bind('<Up>', self.scrud)
         self.root.bind('<Down>', self.scrud)
@@ -38,18 +41,26 @@ class Emo:
         self.lock = False
         self.lib = None
         self.fr = ttk.Frame(self.root)
-        self.fr.pack(fill = 'both')
-        self.lbe = Listbox(self.fr, font = '-*-Segoe-UI-Emoji-*--*-300-*', 
-                           width = 5, height = 10 , 
-                           justify ='center', bg = 'khaki', 
-                           selectbackground = 'teal', selectforeground = 'gold',
-                           exportselection = False, selectmode = 'multiple')
-        self.lbe.pack(fill = 'x', expand = 1, padx = 3, pady = (2, 0))
+        self.fr.pack(fill="both")
+        self.lbe = Listbox(
+            self.fr,
+            font="-*-Segoe-UI-Emoji-*--*-300-*",
+            width=5,
+            height=10,
+            justify="center",
+            bg="khaki",
+            selectbackground="teal",
+            selectforeground="gold",
+            exportselection=False,
+            selectmode="multiple",
+        )
+        self.lbe.pack(fill="x", expand=1, padx=3, pady=(2, 0))
         try:
             with open(Emo.emop) as emr:
                 a = emr.read()
-                if '{' == a[0] and a[-1] == '}':
-                    self.lib = {e: chr(j) for e, j in eval(a).items()}
+                if "{" == a[0] and a[-1] == "}":
+                    self.lib = {e: chr(j) for e, j in literal_eval(a).items()}
+                    del a
                 else:
                     raise Exception('File corrupted!!!')
         except Exception as e:
@@ -60,44 +71,72 @@ class Emo:
                 self.lbe.insert(END,i)
             self.lbe.bind('<ButtonRelease>', self.updatesel)
             self.combo = ttk.Combobox(self.root)
-            self.combo.pack(pady = 2, padx = 2, fill = 'both', expand = 1)
-            self.combo['values'] = sorted(list(self.lib.keys()))
-            self.combo.bind('<<ComboboxSelected>>',self.selectcom)
-            self.combo.bind('<KeyRelease>',self.tynam)
-            self.sp =  IntVar(self.root)
-            self.scl = ttk.Scale(self.fr, from_ = 0, to = len(list(self.lib.values()))-1, variable = self.sp, command = self.sclupt)
-            self.scl.pack(fill = 'x', expand = 1)
-            self.setscl = (0, len(self.lib)-1)
-            self.btc = Button(self.root, text = 'C O P Y', font = 'consolas 10 bold', relief = GROOVE, command = self.copem)
-            self.btc.pack(fill = 'x', expand = 1)
-            self.btm = Button(self.root, text = 'M A R K', font = 'consolas 10 bold', relief = GROOVE, command = self.mark)
-            self.btm.pack(fill = 'x', expand = 1)        
-            self.btm = Button(self.root, text = 'L O A D', font = 'consolas 10 bold', relief = GROOVE, command = self.choind)
-            self.btm.pack(fill = 'x', expand = 1)
-        
-    def tynam(self, event = None):
+            self.combo.pack(pady=2, padx=2, fill="both", expand=1)
+            self.combo["values"] = sorted(list(self.lib.keys()))
+            self.combo.bind("<<ComboboxSelected>>", self.selectcom)
+            self.combo.bind("<KeyRelease>", self.tynam)
+            self.sp = IntVar(self.root)
+            self.scl = ttk.Scale(
+                self.fr,
+                from_=0,
+                to=len(list(self.lib.values())) - 1,
+                variable=self.sp,
+                command=self.sclupt,
+            )
+            self.scl.pack(fill="x", expand=1)
+            self.setscl = (0, len(self.lib) - 1)
+            self.btc = Button(
+                self.root,
+                text="C O P Y",
+                font="consolas 10 bold",
+                relief=GROOVE,
+                command=self.copem,
+            )
+            self.btc.pack(fill="x", expand=1)
+            self.btm = Button(
+                self.root,
+                text="M A R K",
+                font="consolas 10 bold",
+                relief=GROOVE,
+                command=self.mark,
+            )
+            self.btm.pack(fill="x", expand=1)
+            self.btm = Button(
+                self.root,
+                text="L O A D",
+                font="consolas 10 bold",
+                relief=GROOVE,
+                command=self.choind,
+            )
+            self.btm.pack(fill="x", expand=1)
+
+    def tynam(self, event=None):
         # To predict the key-in typing in combobox.
         
         import string
         
         try:
             if event.char.upper() in string.ascii_uppercase:
-                #if self.combo.get():
-                    idx = self.combo.index(INSERT)
-                    gt = self.combo.get()
-                    self.combo.delete(0, END)
-                    self.combo.insert(0, gt[:idx])
-                    if self.combo.get():
-                        for em in self.lib:
-                            r = 2
-                            while r:
-                                if self.combo.get().upper() in em and self.combo.get().upper() == em[:len(self.combo.get())]:
-                                    self.combo.current(sorted(list(self.lib)).index(em))
-                                    idm = list(self.lib.values()).index(self.lib[em])
-                                    self.sp.set(idm)
-                                    self.lbe.see(idm)
-                                r -= 1
-                    self.combo.icursor(index = idx)
+                # if self.combo.get():
+                idx = self.combo.index(INSERT)
+                gt = self.combo.get()
+                self.combo.delete(0, END)
+                self.combo.insert(0, gt[:idx])
+                if self.combo.get():
+                    for em in self.lib:
+                        r = 2
+                        while r:
+                            if (
+                                self.combo.get().upper() in em
+                                and self.combo.get().upper()
+                                == em[: len(self.combo.get())]
+                            ):
+                                self.combo.current(sorted(list(self.lib)).index(em))
+                                idm = list(self.lib.values()).index(self.lib[em])
+                                self.sp.set(idm)
+                                self.lbe.see(idm)
+                            r -= 1
+                self.combo.icursor(index=idx)
         except Exception as e:
             messagebox.showwarning('TeleTVG', f'{e}', parent = self.root)
     
@@ -195,21 +234,9 @@ class Emo:
                     Emo.paste.text.see(INSERT)
                     Emo.paste.text.focus()
                 else:
-                    if 'entry' in [
-                        str(i).rpartition('!')[2] 
-                        for i in Emo.paste.root.winfo_children()[0].winfo_children()
-                        ]:
-                        if Emo.paste.entry.get() not in ['parent', 'child']:
-                            Emo.paste.entry.insert(INSERT, lj)
-                        else:
-                            Emo.paste.entry.delete(0, END)
-                            Emo.paste.entry.insert(END, lj)
-                        Emo.paste.entry.icursor(END)
-                        Emo.paste.entry.focus()
-                    else:
-                        self.root.clipboard_clear()
-                        self.root.clipboard_append(lj)
-                        messagebox.showinfo('Emo', 'Copied!', parent = self.root) 
+                    self.root.clipboard_clear()
+                    self.root.clipboard_append(lj)
+                    messagebox.showinfo("Emo", "Copied!", parent=self.root)
             else:
                 self.root.clipboard_clear()
                 self.root.clipboard_append(lj)
@@ -309,23 +336,12 @@ class Emo:
                             if str(Emo.paste.text.cget('state')) == 'normal':
                                 Emo.paste.text.insert(INSERT, cope)
                                 Emo.paste.text.see(INSERT)
-                                Emo.paste.text.focus()
                             else:
-                                if 'entry' in [
-                                    str(i).rpartition('!')[2] 
-                                    for i in Emo.paste.root.winfo_children()[0].winfo_children()
-                                    ]:
-                                    if Emo.paste.entry.get() not in ['parent', 'child']:
-                                        Emo.paste.entry.insert(INSERT, cope)
-                                    else:
-                                        Emo.paste.entry.delete(0, END)
-                                        Emo.paste.entry.insert(END, cope)
-                                    Emo.paste.entry.icursor(END)
-                                    Emo.paste.entry.focus()
-                                else:
-                                    self.root.clipboard_clear()
-                                    self.root.clipboard_append(cope)
-                                    messagebox.showinfo('Emo', 'Copied!', parent = self.root)
+                                self.root.clipboard_clear()
+                                self.root.clipboard_append(cope)
+                                messagebox.showinfo(
+                                    "Emo", "Copied!", parent=self.root
+                                )
                         else:
                             self.root.clipboard_clear()
                             self.root.clipboard_append(cope)
@@ -346,11 +362,15 @@ class Emo:
                                     class MyMarks(simpledialog.Dialog):
                                     
                                         def body(self, master):
-                                            self.title('Choose Mark')
-                                            Label(master, text="Marking: ").pack(side = LEFT)
-                                            self.e1 = ttk.Combobox(master, state = 'readonly')
-                                            self.e1.pack(side = LEFT)
-                                            self.e1['values'] = list(mrk.loadkeys())
+                                            self.title("Choose Mark")
+                                            Label(master, text="Marking: ").pack(
+                                                side=LEFT
+                                            )
+                                            self.e1 = ttk.Combobox(
+                                                master, state="readonly"
+                                            )
+                                            self.e1.pack(side=LEFT)
+                                            self.e1["values"] = list(mrk.loadkeys())
                                             self.e1.current(0)
                                             return self.e1
                                     
@@ -375,9 +395,7 @@ class Emo:
                     )
             else:
                 messagebox.showinfo(
-                    'Emo', 
-                    'No database, please save some first!', 
-                    parent = self.root
+                    "Emo", "No database, please save some first!", parent=self.root
                 )
                 
     def delwin(self, event = None):

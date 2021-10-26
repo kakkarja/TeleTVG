@@ -403,7 +403,6 @@ class Reminder:
         wd = int(root.winfo_screenwidth()/2 - 250/2)
         hg = int(root.winfo_screenheight()/3 - 250/3)
         root.geometry(f'300x300+{wd}+{hg}')
-        root.overrideredirect(1)
         a = Message(master= root)
         if not self.plat.startswith('win'):
             a.tk.call(
@@ -413,6 +412,8 @@ class Reminder:
                 "plain", 
                 "noTitleBar"
             )
+        else:
+            root.overrideredirect(1)
         a.pack()
         frm = Frame(a, borderwidth = 7, bg = 'dark blue', width = 250, height = 250)
         frm.pack(fill = 'both', expand = 1)
@@ -627,10 +628,7 @@ class Reminder:
     def emj(self):
         # Emoji window.
         
-        if self.plat.startswith('win'):
-            emo.main(self)
-        else:
-            messagebox.showinfo('TeleTVG', 'In MacOS Emoji not working in tkinter!')
+        emo.main(self)
         
     def winexit(self):
         # Will close ReminderTel and Emoji window as well.
@@ -937,17 +935,6 @@ class Reminder:
                 async for message in client.iter_messages(self.users[self.entto.get()], 15):
                     mtx = message.message if message.message else "(>^_^<)>Sticker/File<(>^_^<)"
                     msg = message.text
-                    if not self.plat.startswith('win'):
-                        mtx = ''.join(
-                            filter(
-                                lambda x: x in string.printable, mtx
-                                )
-                            ) if mtx is not None else None
-                        msg = ''.join(
-                            filter(
-                                lambda x: x in string.printable, msg
-                                )
-                            ) if msg is not None else None
                     if message.out:
                         td = dt.ctime(dt.astimezone(message.date))
                         if msg:

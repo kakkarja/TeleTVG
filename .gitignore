@@ -2,3 +2,6 @@
 *.pyc
 .DS_Store
 .vscode/
+Archive_/
+dist/
+teletvg_karjakak.egg-info

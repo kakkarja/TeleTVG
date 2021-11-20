@@ -374,10 +374,10 @@ class Reminder:
         def exit(event=None):
             root.destroy()
 
-        root = Toplevel(self.root)
-        root.after(t_out, exit)
-        root.attributes("-topmost", 1)
+        root = Toplevel()
         root.overrideredirect(1)
+        root.attributes("-topmost", 1)
+        root.after(t_out, exit)
         wd = int(root.winfo_screenwidth() / 2 - 250 / 2)
         hg = int(root.winfo_screenheight() / 3 - 250 / 3)
         root.geometry(f"300x300+{wd}+{hg}")
@@ -946,6 +946,7 @@ class Reminder:
         except Exception as e:
             await client.disconnect()
             messagebox.showerror("TeleTVG", f"{e}")
+            raise e
 
     def getrep(self):
         # Asyncio method of calling for getting reply.
@@ -963,6 +964,7 @@ class Reminder:
                     self.afterid = self.root.after(60000, self.getrep)
             except Exception as e:
                 messagebox.showwarning("TeleTVG", f"{e}")
+                raise e
         else:
             messagebox.showinfo("TeleTVG", 'Please fill "To" first!', parent=self.root)
 

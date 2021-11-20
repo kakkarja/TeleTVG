@@ -377,11 +377,11 @@ class Reminder:
         root = Toplevel(self.root)
         root.after(t_out, exit)
         root.attributes("-topmost", 1)
+        root.overrideredirect(1)
         wd = int(root.winfo_screenwidth() / 2 - 250 / 2)
         hg = int(root.winfo_screenheight() / 3 - 250 / 3)
         root.geometry(f"300x300+{wd}+{hg}")
         a = Message(master=root)
-        root.overrideredirect(1)
         a.pack()
         frm = Frame(a, borderwidth=7, bg="dark blue", width=250, height=250)
         frm.pack(fill="both", expand=1)
@@ -409,7 +409,6 @@ class Reminder:
                 "TeleTVG", '"Yes" save autotext or "No" to delete', parent=self.root
             )
             if ask:
-                ck = [i for i in self.text.get("0.1", END).split("\n") if i]
                 collect = [
                     tuple(
                         [
@@ -417,11 +416,10 @@ class Reminder:
                             k.partition("::")[2].strip().replace("~", "\n"),
                         ]
                     )
-                    for k in ck
+                    for k in self.text.get("0.1", END).split("\n")
                     if "::" in k
                 ]
-                if len(ck) == len(collect):
-                    del ck
+                if collect:
                     self.auto = {}
                     if not os.path.exists(os.path.join(self.orip.parent, "auto.tvg")):
                         with open(
@@ -455,7 +453,6 @@ class Reminder:
                     del collect
                     self.text.delete("1.0", END)
                 else:
-                    del ck
                     del collect
                     messagebox.showinfo(
                         "TeleTVG",
@@ -482,21 +479,22 @@ class Reminder:
                                         event.widget.delete(0, END)
                                         event.widget.insert(0, gt[:idx])
                                         if event.widget.get():
-                                            for name in rd:
-                                                if (
-                                                    event.widget.get().title()
-                                                    in name.title()
-                                                    and name.title().startswith(
-                                                        event.widget.get().title()[0]
-                                                    )
-                                                ):
-                                                    event.widget.delete(0, END)
-                                                    event.widget.insert(
-                                                        END, f"{name}: {rd[name]}"
-                                                    )
-                                                    MyDialog.am.see(
-                                                        list(rd).index(name)
-                                                    )
+                                            r = 2
+                                            while r:
+                                                for ix, name in enumerate(rd):
+                                                    if (
+                                                        event.widget.get().title()
+                                                        in name.title()
+                                                        and name.title().startswith(
+                                                            event.widget.get().title()[0]
+                                                        )
+                                                    ):
+                                                        event.widget.delete(0, END)
+                                                        event.widget.insert(
+                                                            END, f"{name}: {rd[name]}"
+                                                        )
+                                                        MyDialog.am.see(ix)
+                                                r -= 1
                                         event.widget.icursor(index=idx)
                             except Exception as e:
                                 messagebox.showwarning(

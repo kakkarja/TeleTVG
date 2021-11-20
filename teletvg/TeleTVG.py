@@ -571,8 +571,9 @@ class Reminder:
                             ckl = self.text.get(
                                         f"{INSERT} linestart", f"{INSERT}-1c"
                                     ).split(" ")
-                            if len(ckl) == 1 or  ( 
-                                "." in ckl[-2] and ckl[-2][-1] == "."
+                            eow = [".", "!", "?"]
+                            if len(ckl) == 1 or any(
+                                i in ckl[-2] and ckl[-2][-1] == i for i in eow
                                 ):
                                 self.text.delete(
                                     f"{INSERT}-{len(vpox)+1}c", f"{INSERT}"
@@ -591,7 +592,7 @@ class Reminder:
                                     f"{INSERT}-{len(vpox)+1}c", f"{INSERT}"
                                 )
                                 self.text.insert(f"{INSERT}", self.auto[vpox] + " ")
-                            del ckl
+                            del ckl, eow
                         del vpox
 
     def tynam(self, event=None):

@@ -1768,7 +1768,7 @@ def bepath():
     # checking path.
 
     if platform.startswith("win"):
-        chpth = Path(os.path.expanduser("~")).joinpath("Documents", "TTVG")
+        chpth = Path(os.path.expanduser("~")).joinpath("AppData", "Local", "TTVG")
     else:
         chpth = Path(os.path.expanduser("~")).joinpath("TTVG")
     if os.path.isdir(chpth):

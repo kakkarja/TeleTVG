@@ -946,7 +946,6 @@ class Reminder:
         except Exception as e:
             await client.disconnect()
             messagebox.showerror("TeleTVG", f"{e}")
-            raise e
 
     def getrep(self):
         # Asyncio method of calling for getting reply.
@@ -964,7 +963,6 @@ class Reminder:
                     self.afterid = self.root.after(60000, self.getrep)
             except Exception as e:
                 messagebox.showwarning("TeleTVG", f"{e}")
-                raise e
         else:
             messagebox.showinfo("TeleTVG", 'Please fill "To" first!', parent=self.root)
 
